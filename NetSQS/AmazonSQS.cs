@@ -43,8 +43,9 @@ namespace NetSQS
             return new AmazonSQSClient(config);
         }
 
-        public async Task<SendMessageResponse> SendMessageAsync(string message, string queueUrl)
+        public async Task<SendMessageResponse> SendMessageAsync(string message, string queueName)
         {
+            var queueUrl = await GetQueueUrlAsync(queueName);
             var request = new SendMessageRequest
             {
                 QueueUrl = queueUrl,
@@ -56,8 +57,9 @@ namespace NetSQS
             return response;
         }
 
-        public async Task<ReceiveMessageResponse> ReceiveMessageAsync(string queueUrl)
+        public async Task<ReceiveMessageResponse> ReceiveMessageAsync(string queueName)
         {
+            var queueUrl = await GetQueueUrlAsync(queueName);
             var request = new ReceiveMessageRequest(queueUrl);
 
             var response = await _client.ReceiveMessageAsync(request);
@@ -65,7 +67,7 @@ namespace NetSQS
         }
 
         public async Task<ReceiveMessageResponse> ReceiveMessageAsync(
-            string queueUrl,
+            string queueName,
             List<string> attributeNames = null,
             int? maxNumberOfMessages = null,
             List<string> messageAttributeNames = null,
@@ -73,6 +75,7 @@ namespace NetSQS
             int? visibilityTimeoutSeconds = null,
             int waitTimeSeconds = 0)
         {
+            var queueUrl = await GetQueueUrlAsync(queueName);
             var request = new ReceiveMessageRequest
             {
                 QueueUrl = queueUrl,

@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+    <Version>0.0.2</Version>
+    <Authors>Martin Fylke</Authors>
+    <Company />
+    <PackageProjectUrl>https://github.com/LosGlennos/NetSQS</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/LosGlennos/NetSQS</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description></Description>
   </PropertyGroup>
 
   <ItemGroup>

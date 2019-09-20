@@ -8,10 +8,10 @@ namespace NetSQS
     // ReSharper disable InconsistentNaming
     public interface ISQSClient
     {
-        Task<SendMessageResponse> SendMessageAsync(string message, string queue);
-        Task<ReceiveMessageResponse> ReceiveMessageAsync(string queueUrl);
+        Task<SendMessageResponse> SendMessageAsync(string message, string queueName);
+        Task<ReceiveMessageResponse> ReceiveMessageAsync(string queueName);
         Task<ReceiveMessageResponse> ReceiveMessageAsync(
-            string queueUrl = null,
+            string queueName = null,
             List<string> attributeNames = null,
             int? maxNumberOfMessages = null,
             List<string> messageAttributeNames = null,

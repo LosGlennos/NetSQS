@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <Version>0.0.4</Version>
+    <Version>0.0.5</Version>
     <Authors>Martin Fylke</Authors>
     <Company />
     <PackageProjectUrl>https://github.com/LosGlennos/NetSQS</PackageProjectUrl>

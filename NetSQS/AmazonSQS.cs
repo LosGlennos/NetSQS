@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using Amazon.Runtime;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,9 +13,17 @@ namespace NetSQS
     // ReSharper disable InconsistentNaming
     public static class NetSQS
     {
-        public static void AddSQSService(this IServiceCollection services, string endpoint, string region)
+        /// <summary>
+        /// Creates a new singleton instance of SQS Client. If both endpoint and region are specified, the region endpoint will override the ServiceURL endpoint.
+        /// </summary>
+        /// <param name="services">The service collection</param>
+        /// <param name="endpoint">The Amazon SQS endpoint</param>
+        /// <param name="region">The system name for the region. Example: eu-west-1</param>
+        /// <param name="awsAccessKeyId">If not specified, AWS will pick this using the Default Credential Provider Chain</param>
+        /// <param name="awsSecretAccessKey">If not specified, AWS will pick this using the Default Credential Provider Chain</param>
+        public static void AddSQSService(this IServiceCollection services, string endpoint, string region, string awsAccessKeyId = null, string awsSecretAccessKey = null)
         {
-            services.AddSingleton<ISQSClient>(s => new SQSClient(endpoint, region));
+            services.AddSingleton<ISQSClient>(s => new SQSClient(endpoint, region, awsAccessKeyId, awsSecretAccessKey));
         }
     }
 
@@ -22,31 +32,46 @@ namespace NetSQS
         private readonly AmazonSQSClient _client;
 
         /// <summary>
-        /// Creates a new SQS Client
+        /// Creates a new SQS Client. If both endpoint and region are specified, the region endpoint will override the ServiceURL endpoint.
         /// </summary>
         /// <param name="endpoint">SQS Endpoint</param>
         /// <param name="region">The system name for the region ex. eu-west-1</param>
+        /// <param name="awsAccessKeyId">If not specified, AWS will pick this using the Default Credential Provider Chain</param>
+        /// <param name="awsSecretAccessKey">If not specified, AWS will pick this using the Default Credential Provider Chain</param>
         /// <returns></returns>
-        public SQSClient(string endpoint, string region)
+        public SQSClient(string endpoint, string region, string awsAccessKeyId = null, string awsSecretAccessKey = null)
         {
-            _client = CreateSQSClient(endpoint, region);
+            _client = CreateSQSClient(endpoint, region, awsAccessKeyId, awsSecretAccessKey);
         }
 
         /// <summary>
-        /// Creates a new SQS Client
+        /// Creates a new SQS Client. If both endpoint and region are specified, the region endpoint will override the ServiceURL endpoint.
         /// </summary>
         /// <param name="endpoint">SQS Endpoint</param>
         /// <param name="region">The system name for the region ex. eu-west-1</param>
+        /// <param name="awsAccessKeyId">If not specified, AWS will pick this using the Default Credential Provider Chain</param>
+        /// <param name="awsSecretAccessKey">If not specified, AWS will pick this using the Default Credential Provider Chain</param>
         /// <returns></returns>
-        private AmazonSQSClient CreateSQSClient(string endpoint, string region)
+        private AmazonSQSClient CreateSQSClient(string endpoint, string region, string awsAccessKeyId = null, string awsSecretAccessKey = null)
         {
-            var config = new AmazonSQSConfig
+            var config = new AmazonSQSConfig();
+            if (endpoint != null)
             {
-                ServiceURL = endpoint,
-                RegionEndpoint = Regions.GetEndpoint(region)
-            };
-
-            return new AmazonSQSClient(config);
+                config.ServiceURL = endpoint;
+            } 
+            else if (region != null)
+            {
+                config.RegionEndpoint = Regions.GetEndpoint(region);
+            }
+            
+            if (awsAccessKeyId == null && awsSecretAccessKey == null)
+            {
+                return new AmazonSQSClient(config);
+            } 
+            else
+            {
+                return new AmazonSQSClient(awsAccessKeyId, awsSecretAccessKey, config);
+            }
         }
 
         /// <summary>
@@ -167,16 +192,17 @@ namespace NetSQS
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
-        public Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor)
+        public CancellationTokenSource PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor)
         {
             if (maxNumberOfMessagesPerPoll > 10 || maxNumberOfMessagesPerPoll < 1)
             {
                 throw new ArgumentException("Value must be between 1 and 10", nameof(maxNumberOfMessagesPerPoll));
             }
 
-            return Task.Run(async () =>
+            var cancellationToken = new CancellationTokenSource();
+            Task.Run(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
 
@@ -189,7 +215,9 @@ namespace NetSQS
                         }
                     }
                 }
-            });
+            }, cancellationToken.Token);
+
+            return cancellationToken;
         }
 
         /// <summary>
@@ -201,16 +229,17 @@ namespace NetSQS
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
-        public Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor)
+        public CancellationTokenSource PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor)
         {
             if (maxNumberOfMessagesPerPoll > 10 || maxNumberOfMessagesPerPoll < 1)
             {
                 throw new ArgumentException("Value must be between 1 and 10", nameof(maxNumberOfMessagesPerPoll));
             }
 
-            return Task.Run(async () =>
+            var cancellationToken = new CancellationTokenSource();
+            Task.Run(async () =>
               {
-                  while (true)
+                  while (!cancellationToken.IsCancellationRequested)
                   {
                       var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
 
@@ -223,7 +252,9 @@ namespace NetSQS
                           }
                       }
                   }
-              });
+              }, cancellationToken.Token);
+
+            return cancellationToken;
         }
 
         /// <summary>
@@ -239,7 +270,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        public async Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        public async Task<CancellationTokenSource> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor)
         {
             await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff);
@@ -260,7 +291,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        public async Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        public async Task<CancellationTokenSource> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor)
         {
             await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff);

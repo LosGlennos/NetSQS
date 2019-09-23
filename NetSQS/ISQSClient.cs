@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NetSQS
@@ -62,7 +63,7 @@ namespace NetSQS
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
-        Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor);
+        CancellationTokenSource PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor);
 
         /// <summary>
         /// Polls the queue for any new messages, and handles the messages on the queue in the processor specified.
@@ -73,7 +74,7 @@ namespace NetSQS
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
-        Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor);
+        CancellationTokenSource PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor);
 
         /// <summary>
         /// Waits for the queue to be available by checking its availability for a given number of retries, then polls the queue for new messages.
@@ -88,7 +89,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        Task<CancellationTokenSource> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor);
 
         /// <summary>
@@ -104,7 +105,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        Task<CancellationTokenSource> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor);
     }
 }

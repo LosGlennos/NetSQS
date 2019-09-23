@@ -68,3 +68,7 @@ You can also use `PollQueueWithRetryAsync` to automatically retry a connection t
 ```
 var task = PollQueueWithRetryAsync(queueName: "nameofthequeue", pollWaitTime: 0, maxNumberOfMessagesPerPoll: 1, numRetries: 20, minBackOff: 1, maxBackOff: 20, AddSomethingToDb);
 ```
+
+## Contributing
+If you want to contribute you need a running version of SQS in your local kubernetes cluster. You can start a local running instance by applying the yaml-file in `deployment_files/sqs.yaml`.
+This will make testing easier, since you won't have to go towards a production environment.

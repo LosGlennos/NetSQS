@@ -21,6 +21,12 @@ namespace NetSQS
     {
         private readonly AmazonSQSClient _client;
 
+        /// <summary>
+        /// Creates a new SQS Client
+        /// </summary>
+        /// <param name="endpoint">SQS Endpoint</param>
+        /// <param name="region">The system name for the region ex. eu-west-1</param>
+        /// <returns></returns>
         public SQSClient(string endpoint, string region)
         {
             _client = CreateSQSClient(endpoint, region);

@@ -43,6 +43,12 @@ namespace NetSQS
             return new AmazonSQSClient(config);
         }
 
+        /// <summary>
+        /// Puts a message on the queue
+        /// </summary>
+        /// <param name="message">The message to be put on the queue</param>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
         public async Task<SendMessageResponse> SendMessageAsync(string message, string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
@@ -57,6 +63,11 @@ namespace NetSQS
             return response;
         }
 
+        /// <summary>
+        /// Receives a message from the queue.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
         public async Task<ReceiveMessageResponse> ReceiveMessageAsync(string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
@@ -66,6 +77,17 @@ namespace NetSQS
             return response;
         }
 
+        /// <summary>
+        /// Receives a message from the queue
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="attributeNames">A list of attributes that need to be returned along with each message.</param>
+        /// <param name="maxNumberOfMessages">The maximum number of messages that will be picked off the queue for each poll. Valid values: 1 to 10</param>
+        /// <param name="messageAttributeNames">The message attribute names</param>
+        /// <param name="receiveRequestAttemptId">Sets the receive request attempt id. Used if there is a networking error when getting a message.</param>
+        /// <param name="visibilityTimeoutSeconds">The time for which the message should not be picked by other processors</param>
+        /// <param name="waitTimeSeconds">The amount of time the client will try to geta message from the queue</param>
+        /// <returns></returns>
         public async Task<ReceiveMessageResponse> ReceiveMessageAsync(
             string queueName,
             List<string> attributeNames = null,
@@ -97,17 +119,36 @@ namespace NetSQS
             return response;
         }
 
+        /// <summary>
+        /// Creates a Standard queue with default values
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
         public async Task<string> CreateStandardQueueAsync(string queueName)
         {
-            return await CreateQueueAsync(queueName, 345600, 30, false, true);
+            return await CreateQueueAsync(queueName, false, true);
         }
 
+        /// <summary>
+        /// Creates a FIFO queue with default values. Queue name must end with .fifo
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
         public async Task<string> CreateFifoQueueAsync(string queueName)
         {
-            return await CreateQueueAsync(queueName, 345600, 30, true, true);
+            return await CreateQueueAsync(queueName, true, true);
         }
 
-        public async Task<string> CreateQueueAsync(string queueName, int retentionPeriod, int visibilityTimeout, bool isFifo, bool isEncrypted)
+        /// <summary>
+        /// Creates a queue in SQS
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="retentionPeriod">The number of seconds the messages will be kept on the queue before being deleted. Valid values: 60 to 1,209,600. Default: 345,600</param>
+        /// <param name="visibilityTimeout">The time period in seconds for which a message should not be picked by another processor. Valid values: 0 to 43,200. Default: 30</param>
+        /// <param name="isFifo">Defines if the queue created is a FIFO queue.</param>
+        /// <param name="isEncrypted">Used if server side encryption is active.</param>
+        /// <returns></returns>
+        public async Task<string> CreateQueueAsync(string queueName, bool isFifo, bool isEncrypted, int retentionPeriod = 345600, int visibilityTimeout = 30)
         {
             var attributes = new Dictionary<string, string>
             {
@@ -142,6 +183,11 @@ namespace NetSQS
             return queue.QueueUrl;
         }
 
+        /// <summary>
+        /// Deletes a queue with the specified name
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
         public async Task DeleteQueueAsync(string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
@@ -149,6 +195,10 @@ namespace NetSQS
             await _client.DeleteQueueAsync(request);
         }
 
+        /// <summary>
+        /// Lists all the queues on the SQS.
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<string>> ListQueuesAsync()
         {
             var request = new ListQueuesRequest();
@@ -156,70 +206,121 @@ namespace NetSQS
             return response.QueueUrls;
         }
 
-        public async Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor)
+        /// <summary>
+        /// Polls the queue for any new messages, and handles the messages on the queue in the processor specified.
+        /// Will run a polling task by starting a Task in a parallel thread that is not awaited.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
+        /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
+        /// <returns></returns>
+        public Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor)
         {
             if (maxNumberOfMessagesPerPoll > 10 || maxNumberOfMessagesPerPoll < 1)
             {
                 throw new ArgumentException("Value must be between 1 and 10", nameof(maxNumberOfMessagesPerPoll));
             }
 
-            var queueUrl = await GetQueueUrlAsync(queueName);
-
-            while (true)
+            return Task.Run(async () =>
             {
-                var receiveMessageResponse = await ReceiveMessageAsync(queueUrl, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
-
-                foreach (var message in receiveMessageResponse.Messages)
+                while (true)
                 {
-                    var success = await asyncMessageProcessor(message.Body);
-                    if (success)
+                    var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
+
+                    foreach (var message in receiveMessageResponse.Messages)
                     {
-                        await DeleteMessageAsync(queueUrl, message.ReceiptHandle);
+                        var success = await asyncMessageProcessor(message.Body);
+                        if (success)
+                        {
+                            await DeleteMessageAsync(queueName, message.ReceiptHandle);
+                        }
                     }
                 }
-            }
+            });
         }
 
-        public async Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor)
+        /// <summary>
+        /// Polls the queue for any new messages, and handles the messages on the queue in the processor specified.
+        /// Will run a polling task by starting a Task in a parallel thread that is not awaited.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
+        /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
+        /// <returns></returns>
+        public Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor)
         {
             if (maxNumberOfMessagesPerPoll > 10 || maxNumberOfMessagesPerPoll < 1)
             {
                 throw new ArgumentException("Value must be between 1 and 10", nameof(maxNumberOfMessagesPerPoll));
             }
 
-            var queueUrl = await GetQueueUrlAsync(queueName);
+            return Task.Run(async () =>
+              {
+                  while (true)
+                  {
+                      var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
 
-            while (true)
-            {
-                var receiveMessageResponse = await ReceiveMessageAsync(queueUrl, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
-
-                foreach (var message in receiveMessageResponse.Messages)
-                {
-                    var success = messageProcessor(message.Body);
-                    if (success)
-                    {
-                        await DeleteMessageAsync(queueUrl, message.ReceiptHandle);
-                    }
-                }
-            }
+                      foreach (var message in receiveMessageResponse.Messages)
+                      {
+                          var success = messageProcessor(message.Body);
+                          if (success)
+                          {
+                              await DeleteMessageAsync(queueName, message.ReceiptHandle);
+                          }
+                      }
+                  }
+              });
         }
 
-        public async Task PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        /// <summary>
+        /// Waits for the queue to be available by checking its availability for a given number of retries, then polls the queue for new messages.
+        /// Handles the messages on the queue in the processor specified.
+        /// Will run a polling task by starting a Task in a parallel thread that is not awaited.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTime">The amount of time the client will look for messages on the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
+        /// <param name="numRetries">Number of connection retries to the queue.</param>
+        /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
+        /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
+        /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
+        /// <returns></returns>
+        public async Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor)
         {
             await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff);
 
-            await PollQueueAsync(queueName, pollWaitTime, maxNumberOfMessagesPerPoll, asyncMessageProcessor);
+            return PollQueueAsync(queueName, pollWaitTime, maxNumberOfMessagesPerPoll, asyncMessageProcessor);
         }
 
-        public async Task PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        /// <summary>
+        /// Waits for the queue to be available by checking its availability for a given number of retries, then polls the queue for new messages.
+        /// Handles the messages on the queue in the processor specified.
+        /// Will run a polling task by starting a Task in a parallel thread that is not awaited.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTime">The amount of time the client will look for messages on the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
+        /// <param name="numRetries">Number of connection retries to the queue.</param>
+        /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
+        /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
+        /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
+        /// <returns></returns>
+        public async Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor)
         {
             await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff);
 
-            await PollQueueAsync(queueName, pollWaitTime, maxNumberOfMessagesPerPoll, messageProcessor);
+            return PollQueueAsync(queueName, pollWaitTime, maxNumberOfMessagesPerPoll, messageProcessor);
         }
 
+        /// <summary>
+        /// Gets the URL for the queue from its name.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
         private async Task<string> GetQueueUrlAsync(string queueName)
         {
             var request = new GetQueueUrlRequest(queueName);
@@ -227,8 +328,15 @@ namespace NetSQS
             return response.QueueUrl;
         }
 
-        private async Task DeleteMessageAsync(string queueUrl, string receiptHandle)
+        /// <summary>
+        /// Deletes a message from the queue
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="receiptHandle">The identifier of the operation that received the message</param>
+        /// <returns></returns>
+        private async Task DeleteMessageAsync(string queueName, string receiptHandle)
         {
+            var queueUrl = await GetQueueUrlAsync(queueName);
             var request = new DeleteMessageRequest
             {
                 QueueUrl = queueUrl,
@@ -238,6 +346,14 @@ namespace NetSQS
             await _client.DeleteMessageAsync(request);
         }
 
+        /// <summary>
+        /// Does a given number of retries to check if the queue is available.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="numRetries">The number of retries for which to see if the queue is available</param>
+        /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
+        /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
+        /// <returns></returns>
         private async Task WaitForQueueAsync(string queueName, int numRetries, int minBackOff, int maxBackOff)
         {
             for (var i = 0; i < numRetries; i++)
@@ -250,7 +366,7 @@ namespace NetSQS
                 catch (AmazonSQSException e)
                 {
                     var timeSleep = new Random().Next(maxBackOff - minBackOff) + minBackOff;
-                    var timeSleepMilliseconds = (int) TimeSpan.FromSeconds(timeSleep).TotalMilliseconds;
+                    var timeSleepMilliseconds = (int)TimeSpan.FromSeconds(timeSleep).TotalMilliseconds;
                     Task.Delay(timeSleepMilliseconds).Wait();
 
                     if (i == numRetries - 1)

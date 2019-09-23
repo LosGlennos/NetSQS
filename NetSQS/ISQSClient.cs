@@ -20,15 +20,15 @@ namespace NetSQS
             int waitTimeSeconds = 0);
         Task<string> CreateStandardQueueAsync(string queueName);
         Task<string> CreateFifoQueueAsync(string queueName);
-        Task<string> CreateQueueAsync(string queueName, int retentionPeriod, int visibilityTimeout, bool isFifo, bool isEncrypted);
+        Task<string> CreateQueueAsync(string queueName, bool isFifo, bool isEncrypted, int retentionPeriod = 345600, int visibilityTimeout = 30);
         Task DeleteQueueAsync(string queueName);
         Task<List<string>> ListQueuesAsync();
         Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor);
         Task PollQueueAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor);
-        Task PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor);
 
-        Task PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        Task<Task> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor);
     }
 }

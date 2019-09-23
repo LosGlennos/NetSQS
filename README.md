@@ -16,8 +16,8 @@ public void ConfigureServices(IServiceCollection services)
 
 Or you can create it manually like this: `var client = new SQSClient("yourendpoint", "yourregion", "awsAccessKeyId", "awsSecretAccessKey")`
 
-Note: AWS only cares about either the endpoint or the region. If you specify both, the region will overwrite the endpoint.
-Note 2: `awsAccessKeyId` and `awsSecretAccessKey` are optional. If these are not specified, Amazon applies the Default Credential Provider Chain. Read: https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
+**Note**: AWS only cares about either the endpoint or the region. If you specify both, the region will overwrite the endpoint.
+**Note 2**: `awsAccessKeyId` and `awsSecretAccessKey` are optional. If these are not specified, Amazon applies the Default Credential Provider Chain. Read: https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
 
 If you want to get instant feedback on whether or not you are connected to the SQS endpoint. You can try and list the queues on the SQS by running: `await client.ListQueuesAsync()`.
 

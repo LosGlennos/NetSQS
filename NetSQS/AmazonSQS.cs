@@ -55,7 +55,7 @@ namespace NetSQS
         /// <param name="message">The message to be put on the queue</param>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
-        public async Task<SendMessageResponse> SendMessageAsync(string message, string queueName)
+        public async Task<string> SendMessageAsync(string message, string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
             var request = new SendMessageRequest
@@ -66,63 +66,7 @@ namespace NetSQS
 
             var response = await _client.SendMessageAsync(request);
 
-            return response;
-        }
-
-        /// <summary>
-        /// Receives a message from the queue.
-        /// </summary>
-        /// <param name="queueName">The name of the queue</param>
-        /// <returns></returns>
-        public async Task<ReceiveMessageResponse> ReceiveMessageAsync(string queueName)
-        {
-            var queueUrl = await GetQueueUrlAsync(queueName);
-            var request = new ReceiveMessageRequest(queueUrl);
-
-            var response = await _client.ReceiveMessageAsync(request);
-            return response;
-        }
-
-        /// <summary>
-        /// Receives a message from the queue
-        /// </summary>
-        /// <param name="queueName">The name of the queue</param>
-        /// <param name="attributeNames">A list of attributes that need to be returned along with each message.</param>
-        /// <param name="maxNumberOfMessages">The maximum number of messages that will be picked off the queue for each poll. Valid values: 1 to 10</param>
-        /// <param name="messageAttributeNames">The message attribute names</param>
-        /// <param name="receiveRequestAttemptId">Sets the receive request attempt id. Used if there is a networking error when getting a message.</param>
-        /// <param name="visibilityTimeoutSeconds">The time for which the message should not be picked by other processors</param>
-        /// <param name="waitTimeSeconds">The amount of time the client will try to geta message from the queue</param>
-        /// <returns></returns>
-        public async Task<ReceiveMessageResponse> ReceiveMessageAsync(
-            string queueName,
-            List<string> attributeNames = null,
-            int? maxNumberOfMessages = null,
-            List<string> messageAttributeNames = null,
-            string receiveRequestAttemptId = null,
-            int? visibilityTimeoutSeconds = null,
-            int waitTimeSeconds = 0)
-        {
-            var queueUrl = await GetQueueUrlAsync(queueName);
-            var request = new ReceiveMessageRequest
-            {
-                QueueUrl = queueUrl,
-                AttributeNames = attributeNames,
-
-                // Valid values: 1 to 10, Default: 1. See: https://github.com/aws/aws-sdk-net/blob/master/sdk/src/Services/SQS/Generated/Model/ReceiveMessageRequest.cs 
-                MaxNumberOfMessages = maxNumberOfMessages ?? 1,
-                MessageAttributeNames = messageAttributeNames,
-                ReceiveRequestAttemptId = receiveRequestAttemptId,
-
-                // Valid values 0 to 43200, Default: 30. See: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
-                VisibilityTimeout = visibilityTimeoutSeconds ?? 30,
-
-                // If greater than 0, long polling is in effect. See: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html#sqs-long-polling
-                WaitTimeSeconds = waitTimeSeconds
-            };
-
-            var response = await _client.ReceiveMessageAsync(request);
-            return response;
+            return response.MessageId;
         }
 
         /// <summary>
@@ -194,11 +138,13 @@ namespace NetSQS
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
-        public async Task DeleteQueueAsync(string queueName)
+        public async Task<bool> DeleteQueueAsync(string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
             var request = new DeleteQueueRequest(queueUrl);
-            await _client.DeleteQueueAsync(request);
+            var response = await _client.DeleteQueueAsync(request);
+            var success = (int)response.HttpStatusCode >= 200 && (int)response.HttpStatusCode <= 299;
+            return success;
         }
 
         /// <summary>
@@ -381,6 +327,48 @@ namespace NetSQS
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Receives a message from the queue
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="attributeNames">A list of attributes that need to be returned along with each message.</param>
+        /// <param name="maxNumberOfMessages">The maximum number of messages that will be picked off the queue for each poll. Valid values: 1 to 10</param>
+        /// <param name="messageAttributeNames">The message attribute names</param>
+        /// <param name="receiveRequestAttemptId">Sets the receive request attempt id. Used if there is a networking error when getting a message.</param>
+        /// <param name="visibilityTimeoutSeconds">The time for which the message should not be picked by other processors</param>
+        /// <param name="waitTimeSeconds">The amount of time the client will try to geta message from the queue</param>
+        /// <returns></returns>
+        private async Task<ReceiveMessageResponse> ReceiveMessageAsync(
+            string queueName,
+            List<string> attributeNames = null,
+            int? maxNumberOfMessages = null,
+            List<string> messageAttributeNames = null,
+            string receiveRequestAttemptId = null,
+            int? visibilityTimeoutSeconds = null,
+            int waitTimeSeconds = 0)
+        {
+            var queueUrl = await GetQueueUrlAsync(queueName);
+            var request = new ReceiveMessageRequest
+            {
+                QueueUrl = queueUrl,
+                AttributeNames = attributeNames,
+
+                // Valid values: 1 to 10, Default: 1. See: https://github.com/aws/aws-sdk-net/blob/master/sdk/src/Services/SQS/Generated/Model/ReceiveMessageRequest.cs 
+                MaxNumberOfMessages = maxNumberOfMessages ?? 1,
+                MessageAttributeNames = messageAttributeNames,
+                ReceiveRequestAttemptId = receiveRequestAttemptId,
+
+                // Valid values 0 to 43200, Default: 30. See: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
+                VisibilityTimeout = visibilityTimeoutSeconds ?? 30,
+
+                // If greater than 0, long polling is in effect. See: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html#sqs-long-polling
+                WaitTimeSeconds = waitTimeSeconds
+            };
+
+            var response = await _client.ReceiveMessageAsync(request);
+            return response;
         }
     }
 }

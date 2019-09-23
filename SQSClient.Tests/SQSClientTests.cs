@@ -102,9 +102,9 @@ namespace NetSQS.Tests
             await client.SendMessageAsync(message, queueName);
 
             MessagePicked = false;
-            var cancellationToken = client.PollQueueAsync(queueName, 1, 1, (string message) =>
+            var cancellationToken = client.PollQueueAsync(queueName, 1, 1, (string receivedMessage) =>
             {
-                Assert.Equal("Hello World!", message);
+                Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
                 return true;
             });
@@ -130,9 +130,9 @@ namespace NetSQS.Tests
 
             MessagePicked = false;
 
-            var cancellationToken = client.PollQueueAsync(queueName, 1, 1, async (string message) =>
+            var cancellationToken = client.PollQueueAsync(queueName, 1, 1, async (string receivedMessage) =>
             {
-                Assert.Equal("Hello World!", message);
+                Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
                 return await Task.FromResult(true);
             });

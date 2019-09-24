@@ -1,6 +1,6 @@
 # NetSQS
 
-A small wrapper around the Amazon SQS SDK to simplify usage.
+A small wrapper around the Amazon SQS SDK to simplify usage. A nod to https://github.com/ryannel/gosqs who made the go implementation of this wrapper first.
 
 ## Usage
 

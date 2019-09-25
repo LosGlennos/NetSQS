@@ -137,7 +137,7 @@ namespace NetSQS
 
             if (isFifo)
             {
-                if (queueName.Substring(queueName.Length - 5) != ".fifo")
+                if (queueName.Length <= 5 || queueName.Substring(queueName.Length - 5) != ".fifo")
                 {
                     throw new ArgumentException("Queue name must end with '.fifo'", nameof(queueName));
                 }

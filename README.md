@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/martinhugosvensson/martinhugosvensson/_apis/build/status/LosGlennos.NetSQS?branchName=master)](https://dev.azure.com/martinhugosvensson/martinhugosvensson/_build/latest?definitionId=1&branchName=master)
+
 # NetSQS
 
 A small wrapper around the Amazon SQS SDK to simplify usage. A nod to https://github.com/ryannel/gosqs who made the go implementation of this wrapper first.

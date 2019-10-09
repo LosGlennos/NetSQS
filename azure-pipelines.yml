@@ -24,6 +24,11 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '$(solution)'
+
 - task: PowerShell@1
   displayName: 'PowerShell Script'
   inputs:

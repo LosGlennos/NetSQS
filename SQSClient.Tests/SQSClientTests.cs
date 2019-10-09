@@ -90,7 +90,7 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public async Task SendMessageFifoAsync_ShouldPutMessageOnQueue()
+        public async Task SendFifoMessageAsync_ShouldPutMessageOnQueue()
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}.fifo";

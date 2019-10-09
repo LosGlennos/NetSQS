@@ -81,10 +81,12 @@ namespace NetSQS
         public async Task<string> SendMessageAsync(string message, string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
+            
             var request = new SendMessageRequest
             {
                 QueueUrl = queueUrl,
-                MessageBody = message
+                MessageBody = message,
+                MessageGroupId = queueName.EndsWith(".fifo")? queueUrl : null,
             };
 
             var response = await _client.SendMessageAsync(request);
@@ -107,7 +109,7 @@ namespace NetSQS
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
-        public async Task<string> CreateFifoQueueAsync(string queueName)
+        public async Task<string> CreateStandardFifoQueueAsync(string queueName)
         {
             return await CreateQueueAsync(queueName, true, true);
         }
@@ -144,6 +146,9 @@ namespace NetSQS
 
                 attributes.Add("FifoQueue", "true");
                 attributes.Add("ContentBasedDeduplication", "true");
+            } else if (queueName.EndsWith(".fifo"))
+            {
+                    throw new ArgumentException("Non fifo queue names can't end with .fifo");
             }
 
             var request = new CreateQueueRequest

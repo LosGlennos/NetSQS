@@ -44,7 +44,7 @@ namespace NetSQS.Mock
             return await CreateQueueAsync(queueName, false, false);
         }
 
-        public async Task<string> CreateFifoQueueAsync(string queueName)
+        public async Task<string> CreateStandardFifoQueueAsync(string queueName)
         {
             return await CreateQueueAsync(queueName, true, true);
         }

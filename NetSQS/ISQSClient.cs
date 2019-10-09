@@ -28,7 +28,7 @@ namespace NetSQS
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
-        Task<string> CreateFifoQueueAsync(string queueName);
+        Task<string> CreateStandardFifoQueueAsync(string queueName);
 
         /// <summary>
         /// Creates a queue in SQS

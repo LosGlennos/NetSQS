@@ -34,27 +34,27 @@ namespace NetSQS.Mock.Tests
         }
 
         [Fact]
-        public async Task MockCreateFifoQueueAsync_ShouldReturnQueueUrl_WhenCreatingFifoQueue()
+        public async Task MockCreateStandardFifoQueueAsync_ShouldReturnQueueUrl_WhenCreatingFifoQueue()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
-            var queueUrl = await client.CreateFifoQueueAsync("test.fifo");
+            var queueUrl = await client.CreateStandardFifoQueueAsync("test.fifo");
 
             Assert.Equal("https://mockRegion/queue/test.fifo", queueUrl);
         }
 
         [Fact]
-        public async Task MockCreateFifoQueueAsync_ShouldThrowArgumentException_WhenQueueNameDoesNotEndWithFifo()
+        public async Task MockCreateStandardFifoQueueAsync_ShouldThrowArgumentException_WhenQueueNameDoesNotEndWithFifo()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
 
-            await Assert.ThrowsAsync<ArgumentException>(() => client.CreateFifoQueueAsync("test"));
+            await Assert.ThrowsAsync<ArgumentException>(() => client.CreateStandardFifoQueueAsync("test"));
         }
 
         [Fact]
         public async Task MockSendMessageAsync_ShouldPutAMessageOnTheQueue_WhenQueueExists()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
-            await client.CreateFifoQueueAsync("mockQueue.fifo");
+            await client.CreateStandardFifoQueueAsync("mockQueue.fifo");
             var messageId = await client.SendMessageAsync("Hello World!", "mockQueue.fifo");
 
             Assert.NotNull(messageId);
@@ -74,7 +74,7 @@ namespace NetSQS.Mock.Tests
         public async Task MockPollQueueAsync_ShouldRetrieveMessage_WhenQueueAndMessageExists()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
-            await client.CreateFifoQueueAsync("mockQueue.fifo");
+            await client.CreateStandardFifoQueueAsync("mockQueue.fifo");
             await client.SendMessageAsync("Hello World!", "mockQueue.fifo");
 
             var cancellationToken = client.PollQueueAsync("mockQueue.fifo", 1, 1, message =>
@@ -94,7 +94,7 @@ namespace NetSQS.Mock.Tests
         public async Task MockPollQueueAsync_ShouldRetrieveMessageWithAsyncProcessor_WhenQueueAndMessageExists()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
-            await client.CreateFifoQueueAsync("mockQueue.fifo");
+            await client.CreateStandardFifoQueueAsync("mockQueue.fifo");
             await client.SendMessageAsync("Hello World!", "mockQueue.fifo");
 
             var cancellationToken = client.PollQueueAsync("mockQueue.fifo", 1, 1, async (message) =>
@@ -114,7 +114,7 @@ namespace NetSQS.Mock.Tests
         public async Task MockPollQueueWithRetryAsync_ShouldRetrieveMessage_WhenQueueAndMessageExists()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
-            await client.CreateFifoQueueAsync("mockQueue.fifo");
+            await client.CreateStandardFifoQueueAsync("mockQueue.fifo");
             await client.SendMessageAsync("Hello World!", "mockQueue.fifo");
 
             var cancellationToken = await client.PollQueueWithRetryAsync("mockQueue.fifo", 1, 1, 10, 1, 10, message =>
@@ -134,7 +134,7 @@ namespace NetSQS.Mock.Tests
         public async Task MockPollQueueWithRetryAsync_ShouldRetrieveMessageWithAsyncMessageProcessor_WhenQueueAndMessageExists()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
-            await client.CreateFifoQueueAsync("mockQueue.fifo");
+            await client.CreateStandardFifoQueueAsync("mockQueue.fifo");
             await client.SendMessageAsync("Hello World!", "mockQueue.fifo");
 
             var cancellationToken = await client.PollQueueWithRetryAsync("mockQueue.fifo", 1, 1, 10, 1, 10, async message =>
@@ -163,7 +163,7 @@ namespace NetSQS.Mock.Tests
         public async Task MockDeleteQueue_ShouldDeleteQueue_IfQueueExists()
         {
             var client = new SQSClientMock("mockEndpoint", "mockRegion");
-            await client.CreateFifoQueueAsync("mockQueue.fifo");
+            await client.CreateStandardFifoQueueAsync("mockQueue.fifo");
 
             var queuesOnClientBeforeDeletion = await client.ListQueuesAsync();
             await client.DeleteQueueAsync("mockQueue.fifo");

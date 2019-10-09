@@ -53,7 +53,7 @@ steps:
 - task: NuGetCommand@2
   inputs:
     command: 'pack'
-    packagesToPack: '**/*.csproj'
+    packagesToPack: '**/NetSQS/*.csproj'
     versioningScheme: 'off'
 
 - task: PublishBuildArtifacts@1

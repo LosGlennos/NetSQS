@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>NetSQS</id>
+    <version>#VERSION#</version>
+    <title>NetSQS</title>
+    <authors>Martin Fylke</authors>
+    <owners>Martin Fylke</owners>
+    <licenseUrl>https://github.com/LosGlennos/NetSQS/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/LosGlennos/NetSQS</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A thin wrapper around the AmazonSQS SDK</description>
+  </metadata>
+</package>

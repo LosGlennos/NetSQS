@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.0.8</Version>
+    <Version>1.0.0</Version>
     <Authors>Martin Fylke</Authors>
     <Company />
     <PackageProjectUrl>https://github.com/LosGlennos/NetSQS</PackageProjectUrl>
@@ -10,7 +10,7 @@
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Description></Description>
+    <Description>Thin wrapper around the AmazonSQS SDK</Description>
   </PropertyGroup>
 
   <ItemGroup>

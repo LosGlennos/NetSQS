@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/martinhugosvensson/martinhugosvensson/_apis/build/status/LosGlennos.NetSQS?branchName=master)](https://dev.azure.com/martinhugosvensson/martinhugosvensson/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/martinhugosvensson/martinhugosvensson/_apis/build/status/LosGlennos.NetSQS?branchName=master)](https://dev.azure.com/martinhugosvensson/martinhugosvensson/_build/latest?definitionId=1&branchName=master) [![Build Status](https://img.shields.io/nuget/v/NetSQS)](https://img.shields.io/nuget/v/NetSQS)
 
 # NetSQS
 

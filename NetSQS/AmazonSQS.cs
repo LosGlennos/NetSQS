@@ -109,7 +109,7 @@ namespace NetSQS
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
-        public async Task<string> CreateFifoQueueAsync(string queueName)
+        public async Task<string> CreateStandardFifoQueueAsync(string queueName)
         {
             return await CreateQueueAsync(queueName, true, true);
         }
@@ -146,6 +146,12 @@ namespace NetSQS
 
                 attributes.Add("FifoQueue", "true");
                 attributes.Add("ContentBasedDeduplication", "true");
+            } else
+            {
+                if (queueName.EndsWith(".fifo"))
+                {
+                    throw new ArgumentException("Non fifo queue names can't end with .fifo");
+                }
             }
 
             var request = new CreateQueueRequest

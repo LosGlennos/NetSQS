@@ -28,14 +28,22 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public async Task CreateFifoQueueAsync_ShouldCreateFifoQueue()
+        public async Task CreateStandardFifoQueueAsync_ShouldCreateFifoQueue()
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}.fifo";
-            var queueUrl = await client.CreateFifoQueueAsync(queueName);
+            var queueUrl = await client.CreateStandardFifoQueueAsync(queueName);
             Assert.NotEmpty(queueUrl);
 
             await client.DeleteQueueAsync(queueName);
+        }
+
+        [Fact]
+        public async Task CreateQueueAsync_ShouldError_IfNameContainsFifo()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid().ToString()}.fifo";
+            await Assert.ThrowsAsync<ArgumentException>(() => client.CreateQueueAsync(queueName, false, true));
         }
 
         [Fact]
@@ -94,7 +102,7 @@ namespace NetSQS.Tests
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}.fifo";
-            await client.CreateFifoQueueAsync(queueName);
+            await client.CreateStandardFifoQueueAsync(queueName);
 
             var message = "Hello World!";
             var messageId = await client.SendMessageAsync(message, queueName);

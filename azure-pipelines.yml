@@ -37,7 +37,7 @@ steps:
       Write-Host “Value of ReleaseFullPath: ‘“$env:BUILD_SOURCEBRANCH”’”
       $version = ""
       $branch = $env:BUILD_SOURCEBRANCH
-      if ($branch.length -gt 0 -and $branch.ToCharArray() -contains 'tags') { 
+      if ($branch.length -gt 0 -and $branch.IndexOf('tags') -gt -1) { 
         $version = $branch.split(“/”)[2] 
       } else {
         $version = '1.0.0'

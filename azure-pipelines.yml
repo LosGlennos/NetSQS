@@ -31,6 +31,7 @@ steps:
 
 - task: PowerShell@1
   displayName: 'PowerShell Script'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
     scriptType: inlineScript
     inlineScript: |
@@ -45,18 +46,21 @@ steps:
       Write-Host (“##vso[task.setvariable variable=VERSION;isSecret=false;]$version”)
 
 - task: FileTransform@1
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
     folderPath: '$(System.DefaultWorkingDirectory)'
     fileType: 'xml'
     targetFiles: '**/NetSQS.nuspec'
 
 - task: NuGetCommand@2
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
     command: 'pack'
     packagesToPack: '**/NetSQS/*.csproj'
     versioningScheme: 'off'
 
 - task: PublishBuildArtifacts@1
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))  
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'

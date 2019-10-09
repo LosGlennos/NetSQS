@@ -31,36 +31,31 @@ steps:
 
 - task: PowerShell@1
   displayName: 'PowerShell Script'
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
   inputs:
     scriptType: inlineScript
     inlineScript: |
       Write-Host “Value of ReleaseFullPath: ‘“$env:BUILD_SOURCEBRANCH”’”
-      $version = ""
       $branch = $env:BUILD_SOURCEBRANCH
-      if ($branch.length -gt 0 -and $branch.IndexOf('tags') -gt -1) { 
-        $version = $branch.split(“/”)[2] 
-      } else {
-        $version = '1.0.0'
-      }
+      $version = $branch.split(“/”)[2] 
       Write-Host (“##vso[task.setvariable variable=VERSION;isSecret=false;]$version”)
 
 - task: FileTransform@1
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
   inputs:
     folderPath: '$(System.DefaultWorkingDirectory)'
     fileType: 'xml'
     targetFiles: '**/NetSQS.nuspec'
 
 - task: NuGetCommand@2
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
   inputs:
     command: 'pack'
     packagesToPack: '**/NetSQS/*.csproj'
     versioningScheme: 'off'
 
 - task: PublishBuildArtifacts@1
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))  
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'

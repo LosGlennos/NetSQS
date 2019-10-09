@@ -146,12 +146,9 @@ namespace NetSQS
 
                 attributes.Add("FifoQueue", "true");
                 attributes.Add("ContentBasedDeduplication", "true");
-            } else
+            } else if (queueName.EndsWith(".fifo"))
             {
-                if (queueName.EndsWith(".fifo"))
-                {
                     throw new ArgumentException("Non fifo queue names can't end with .fifo");
-                }
             }
 
             var request = new CreateQueueRequest

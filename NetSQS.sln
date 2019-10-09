@@ -7,10 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetSQS", "NetSQS\NetSQS.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetSQS.Tests", "SQSClient.Tests\NetSQS.Tests.csproj", "{83760076-DF61-4005-AAC0-E55D9F44A549}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetSQS.Mock", "NetSQS.Mock\NetSQS.Mock.csproj", "{E239CDCD-5E72-4F85-AA50-149C1A0E7B37}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetSQS.Mock.Tests", "NetSQS.Mock.Tests\NetSQS.Mock.Tests.csproj", "{14010DB8-6CB2-4928-8402-E57A26FDE9D8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,14 +21,6 @@ Global
 		{83760076-DF61-4005-AAC0-E55D9F44A549}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83760076-DF61-4005-AAC0-E55D9F44A549}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83760076-DF61-4005-AAC0-E55D9F44A549}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E239CDCD-5E72-4F85-AA50-149C1A0E7B37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E239CDCD-5E72-4F85-AA50-149C1A0E7B37}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E239CDCD-5E72-4F85-AA50-149C1A0E7B37}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E239CDCD-5E72-4F85-AA50-149C1A0E7B37}.Release|Any CPU.Build.0 = Release|Any CPU
-		{14010DB8-6CB2-4928-8402-E57A26FDE9D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{14010DB8-6CB2-4928-8402-E57A26FDE9D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{14010DB8-6CB2-4928-8402-E57A26FDE9D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{14010DB8-6CB2-4928-8402-E57A26FDE9D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

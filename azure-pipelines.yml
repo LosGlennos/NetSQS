@@ -24,12 +24,32 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
-- task: VSBuild@1
+- task: PowerShell@1
+  displayName: 'PowerShell Script'
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:OutputPath="$(build.artifactStagingDirectory)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    scriptType: inlineScript
+    inlineScript: |
+      Write-Host “Value of ReleaseFullPath: ‘“$env:RELEASE_ARTIFACTS_NETSQS_SOURCEBRANCH”’”
+      $version = ""
+      $branch = $env:RELEASE_ARTIFACTS_NETSQS_SOURCEBRANCH
+      if ($branch.length -gt 0 -and $branch.ToCharArray() -contains 'tags') { 
+        $version = $env:RELEASE_ARTIFACTS_NETSQS_SOURCEBRANCH.split(“/”)[2] 
+      } else {
+        $version = '1.0.0'
+      }
+      Write-Host (“##vso[task.setvariable variable=VERSION;isSecret=false;]$version”)
+
+- task: FileTransform@1
+  inputs:
+    folderPath: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    fileType: 'xml'
+    targetFiles: '**/NetSQS.nuspec'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    versioningScheme: 'off'
 
 - task: CopyFiles@2
   inputs:

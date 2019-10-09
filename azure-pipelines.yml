@@ -40,12 +40,17 @@ steps:
       $version = $branch.split(“/”)[2] 
       Write-Host (“##vso[task.setvariable variable=VERSION;isSecret=false;]$version”)
 
-- task: FileTransform@1
+- task: replacetokens@3
   condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
   inputs:
-    folderPath: '$(System.DefaultWorkingDirectory)'
-    fileType: 'xml'
+    rootDirectory: '$(System.DefaultWorkingDirectory)'
     targetFiles: '**/NetSQS.nuspec'
+    encoding: 'auto'
+    writeBOM: true
+    actionOnMissing: 'warn'
+    keepToken: false
+    tokenPrefix: '#{'
+    tokenSuffix: '}#''
 
 - task: NuGetCommand@2
   condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))

@@ -29,11 +29,11 @@ steps:
   inputs:
     scriptType: inlineScript
     inlineScript: |
-      Write-Host “Value of ReleaseFullPath: ‘“$env:RELEASE_ARTIFACTS_NETSQS_SOURCEBRANCH”’”
+      Write-Host “Value of ReleaseFullPath: ‘“$env:BUILD_SOURCEBRANCH”’”
       $version = ""
-      $branch = $env:RELEASE_ARTIFACTS_NETSQS_SOURCEBRANCH
+      $branch = $env:BUILD_SOURCEBRANCH
       if ($branch.length -gt 0 -and $branch.ToCharArray() -contains 'tags') { 
-        $version = $env:RELEASE_ARTIFACTS_NETSQS_SOURCEBRANCH.split(“/”)[2] 
+        $version = $branch.split(“/”)[2] 
       } else {
         $version = '1.0.0'
       }

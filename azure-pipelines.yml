@@ -50,7 +50,7 @@ steps:
     actionOnMissing: 'warn'
     keepToken: false
     tokenPrefix: '#{'
-    tokenSuffix: '}#''
+    tokenSuffix: '}#'
 
 - task: NuGetCommand@2
   condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))

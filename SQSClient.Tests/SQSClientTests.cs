@@ -89,6 +89,21 @@ namespace NetSQS.Tests
             await client.DeleteQueueAsync(queueName);
         }
 
+        [Fact]
+        public async Task SendMessageFifoAsync_ShouldPutMessageOnQueue()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid().ToString()}.fifo";
+            await client.CreateFifoQueueAsync(queueName);
+
+            var message = "Hello World!";
+            var messageId = await client.SendMessageAsync(message, queueName);
+
+            Assert.NotNull(messageId);
+
+            await client.DeleteQueueAsync(queueName);
+        }
+
         private bool MessagePicked { get; set; }
 
         [Fact]

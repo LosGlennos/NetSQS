@@ -81,10 +81,12 @@ namespace NetSQS
         public async Task<string> SendMessageAsync(string message, string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
+            
             var request = new SendMessageRequest
             {
                 QueueUrl = queueUrl,
-                MessageBody = message
+                MessageBody = message,
+                MessageGroupId = queueName.EndsWith(".fifo")? queueUrl : null,
             };
 
             var response = await _client.SendMessageAsync(request);

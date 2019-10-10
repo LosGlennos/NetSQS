@@ -10,5 +10,11 @@
     <projectUrl>https://github.com/LosGlennos/NetSQS</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A thin wrapper around the AmazonSQS SDK</description>
+    <dependencies>
+      <dependency id="AWSSDK.Core" version="3.3.103.42" />
+      <dependency id="AWSSDK.Extensions.NETCore.Setup" version="3.3.100.1" />
+      <dependency id="AWSSDK.SQS" version="3.3.102.10" />
+      <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="2.2.0" />
+    </dependencies>
   </metadata>
 </package>

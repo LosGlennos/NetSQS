@@ -125,7 +125,7 @@ namespace NetSQS.Tests
             await client.SendMessageAsync(message, queueName);
 
             MessagePicked = false;
-            var cancellationToken = client.PollQueueAsync(queueName, 1, 1, (string receivedMessage) =>
+            var cancellationToken = client.StartMessageReceiver(queueName, 1, 1, (string receivedMessage) =>
             {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
@@ -153,7 +153,7 @@ namespace NetSQS.Tests
 
             MessagePicked = false;
 
-            var cancellationToken = client.PollQueueAsync(queueName, 1, 1, async (string receivedMessage) =>
+            var cancellationToken = client.StartMessageReceiver(queueName, 1, 1, async (string receivedMessage) =>
             {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
@@ -170,12 +170,12 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public async Task PollQueueWithRetryAsync_ShouldThrowErrorWithAsyncMethod_IfQueueDoesNotExist()
+        public void PollQueueWithRetryAsync_ShouldThrowErrorWithAsyncMethod_IfQueueDoesNotExist()
         {
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
 
-            await Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.PollQueueWithRetryAsync(queueName, 1, 1, 2, 1, 10, async (string message) =>
+            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiverWithRetry(queueName, 1, 1, 2, 1, 10, async (string message) =>
              {
                  Assert.Equal("Hello World!", message);
                  return await Task.FromResult(true);
@@ -183,12 +183,12 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public async Task PollQueueWithRetryAsync_ShouldThrowError_IfQueueDoesNotExist()
+        public void PollQueueWithRetryAsync_ShouldThrowError_IfQueueDoesNotExist()
         {
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
 
-            await Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.PollQueueWithRetryAsync(queueName, 1, 1, 2, 1, 10, (string message) =>
+            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiverWithRetry(queueName, 1, 1, 2, 1, 10, (string message) =>
             {
                 Assert.Equal("Hello World!", message);
                 return true;

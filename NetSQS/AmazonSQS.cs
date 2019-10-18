@@ -396,8 +396,18 @@ namespace NetSQS
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor)
         {
-            Task.Run(async () => await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff)).Wait();
-
+            var task = Task.Run(async () => await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff));
+            try
+            {
+                task.Wait();
+            }
+            catch (AggregateException e)
+            {
+                if (e.InnerException is QueueDoesNotExistException)
+                {
+                    throw new QueueDoesNotExistException(e.InnerException.Message);
+                }
+            }
             return StartMessageReceiver(queueName, pollWaitTime, maxNumberOfMessagesPerPoll, asyncMessageProcessor);
         }
 
@@ -417,7 +427,18 @@ namespace NetSQS
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor)
         {
-            Task.Run(async () => await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff)).Wait();
+            var task = Task.Run(async () => await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff));
+            try
+            {
+                task.Wait();
+            }
+            catch (AggregateException e)
+            {
+                if (e.InnerException is QueueDoesNotExistException)
+                {
+                    throw new QueueDoesNotExistException(e.InnerException.Message);
+                }
+            }
 
             return StartMessageReceiver(queueName, pollWaitTime, maxNumberOfMessagesPerPoll, messageProcessor);
         }

@@ -65,17 +65,17 @@ public void WriteToConsole(string message)
 
 public MessagePolling() 
 {
-    var fooCancellationToken = client.PollQueueAsync("nameofthequeue", 0, 1, AddSomethingToDb);
-    var barCancellationToken = client.PollQueueAsync("nameofthequeue", 0, 1, WriteToConsole);
+    var fooCancellationToken = client.StartMessageReceiver("nameofthequeue", 0, 1, AddSomethingToDb);
+    var barCancellationToken = client.StartMessageReceiver("nameofthequeue", 0, 1, WriteToConsole);
     
     // If you want to cancel the parallel tasks created by these methods. Do this:
     fooCancellationToken.Cancel();
     barCancellationToken.Cancel();
 }
 ```
-You can also use `PollQueueWithRetryAsync` to automatically retry a connection to the queue if there has been an error while connecting. This is specified with a number of retries and a min and max backoff for the retry:
+You can also use `StartMessageReceiver` to automatically retry a connection to the queue if there has been an error while connecting. This is specified with a number of retries and a min and max backoff for the retry:
 ```csharp
-var task = PollQueueWithRetryAsync(queueName: "nameofthequeue", pollWaitTime: 0, maxNumberOfMessagesPerPoll: 1, numRetries: 20, minBackOff: 1, maxBackOff: 20, AddSomethingToDb);
+var task = StartMessageReceiver(queueName: "nameofthequeue", pollWaitTime: 0, maxNumberOfMessagesPerPoll: 1, numRetries: 20, minBackOff: 1, maxBackOff: 20, AddSomethingToDb);
 ```
 
 ## Contributing

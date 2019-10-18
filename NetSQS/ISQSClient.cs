@@ -91,7 +91,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        [Obsolete("PollQueueWithRetryAsync is deprecated and will be removed, please use StartMessageReceiverWithRetry instead.", true)]
+        [Obsolete("PollQueueWithRetryAsync is deprecated and will be removed, please use StartMessageReceiverWithConnectionRetry instead.", true)]
         Task<CancellationTokenSource> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor);
 
@@ -108,7 +108,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        [Obsolete("PollQueueWithRetryAsync is deprecated and will be removed, please use StartMessageReceiverWithRetry instead.", true)]
+        [Obsolete("PollQueueWithRetryAsync is deprecated and will be removed, please use StartMessageReceiverWithConnectionRetry instead.", true)]
         Task<CancellationTokenSource> PollQueueWithRetryAsync(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor);
 
@@ -125,7 +125,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        CancellationTokenSource StartMessageReceiverWithRetry(string queueName, int pollWaitTime,
+        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime,
             int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor);
 
@@ -142,7 +142,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
-        CancellationTokenSource StartMessageReceiverWithRetry(string queueName, int pollWaitTime,
+        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime,
             int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor);
 

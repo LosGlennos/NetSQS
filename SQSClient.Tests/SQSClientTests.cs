@@ -115,7 +115,7 @@ namespace NetSQS.Tests
         private bool MessagePicked { get; set; }
 
         [Fact]
-        public async Task PollQueueAsync_ShouldPickMessageFromQueue_GivenSynchronousMethod()
+        public async Task StartMessageReceiver_ShouldPickMessageFromQueue_GivenSynchronousMethod()
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}";
@@ -142,7 +142,7 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public async Task PollQueueAsync_ShouldPickMessageFromQueue_GivenAsynchronousMethod()
+        public async Task StartMessageReceiver_ShouldPickMessageFromQueue_GivenAsynchronousMethod()
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}";
@@ -170,12 +170,12 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public void PollQueueWithRetryAsync_ShouldThrowErrorWithAsyncMethod_IfQueueDoesNotExist()
+        public void StartMessageReceiver_ShouldThrowErrorWithAsyncMethod_IfQueueDoesNotExist()
         {
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
 
-            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiverWithRetry(queueName, 1, 1, 2, 1, 10, async (string message) =>
+            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, async (string message) =>
              {
                  Assert.Equal("Hello World!", message);
                  return await Task.FromResult(true);
@@ -183,12 +183,12 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public void PollQueueWithRetryAsync_ShouldThrowError_IfQueueDoesNotExist()
+        public void StartMessageReceiver_ShouldThrowError_IfQueueDoesNotExist()
         {
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
 
-            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiverWithRetry(queueName, 1, 1, 2, 1, 10, (string message) =>
+            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, (string message) =>
             {
                 Assert.Equal("Hello World!", message);
                 return true;

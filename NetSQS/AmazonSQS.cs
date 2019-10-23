@@ -56,16 +56,16 @@ namespace NetSQS
             if (endpoint != null)
             {
                 config.ServiceURL = endpoint;
-            } 
+            }
             else if (region != null)
             {
                 config.RegionEndpoint = Regions.GetEndpoint(region);
             }
-            
+
             if (awsAccessKeyId == null && awsSecretAccessKey == null)
             {
                 return new AmazonSQSClient(config);
-            } 
+            }
             else
             {
                 return new AmazonSQSClient(awsAccessKeyId, awsSecretAccessKey, config);
@@ -81,7 +81,7 @@ namespace NetSQS
         public async Task<string> SendMessageAsync(string message, string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
-            
+
             var request = new SendMessageRequest
             {
                 QueueUrl = queueUrl,
@@ -272,30 +272,10 @@ namespace NetSQS
         /// <returns></returns>
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor)
         {
-            if (maxNumberOfMessagesPerPoll > 10 || maxNumberOfMessagesPerPoll < 1)
-            {
-                throw new ArgumentException("Value must be between 1 and 10", nameof(maxNumberOfMessagesPerPoll));
-            }
-
-            var cancellationToken = new CancellationTokenSource();
-            Task.Run(async () =>
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
-
-                    foreach (var message in receiveMessageResponse.Messages)
-                    {
-                        var success = await asyncMessageProcessor(message.Body);
-                        if (success)
-                        {
-                            await DeleteMessageAsync(queueName, message.ReceiptHandle);
-                        }
-                    }
-                }
-            }, cancellationToken.Token);
-
-            return cancellationToken;
+            var cancellationTokenSource = new CancellationTokenSource();
+            StartMessageReceiverInternal(queueName, pollWaitTime, maxNumberOfMessagesPerPoll,
+                asyncMessageProcessor, cancellationTokenSource.Token);
+            return cancellationTokenSource;
         }
 
         /// <summary>
@@ -308,30 +288,67 @@ namespace NetSQS
         /// <returns></returns>
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor)
         {
+            var cancellationTokenSource = new CancellationTokenSource();
+            StartMessageReceiverInternal(queueName, pollWaitTime, maxNumberOfMessagesPerPoll,
+                async (arg) => messageProcessor(arg), cancellationTokenSource.Token);
+            return cancellationTokenSource;
+        }
+
+        /// <summary>
+        /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
+        /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
+        /// <param name="cancellationToken">Will be used to request cancellation of the receiver process.</param>
+        /// <returns></returns>
+        public void StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor, CancellationToken cancellationToken)
+        {
+            StartMessageReceiverInternal(queueName, pollWaitTime, maxNumberOfMessagesPerPoll,
+                asyncMessageProcessor, cancellationToken);
+        }
+
+        /// <summary>
+        /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
+        /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
+        /// <param name="cancellationToken">Will be used to request cancellation of the receiver process.</param>
+        /// <returns></returns>
+        public void StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor, CancellationToken cancellationToken)
+        {
+            StartMessageReceiverInternal(queueName, pollWaitTime, maxNumberOfMessagesPerPoll,
+                async (arg) => messageProcessor(arg), cancellationToken);
+        }
+
+        private void StartMessageReceiverInternal(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+            Func<string, Task<bool>> asyncMessageProcessor, CancellationToken cancellationToken)
+        {
             if (maxNumberOfMessagesPerPoll > 10 || maxNumberOfMessagesPerPoll < 1)
             {
                 throw new ArgumentException("Value must be between 1 and 10", nameof(maxNumberOfMessagesPerPoll));
             }
 
-            var cancellationToken = new CancellationTokenSource();
             Task.Run(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTime, maxNumberOfMessages: maxNumberOfMessagesPerPoll);
+                    var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTime,
+                        maxNumberOfMessages: maxNumberOfMessagesPerPoll);
 
                     foreach (var message in receiveMessageResponse.Messages)
                     {
-                        var success = messageProcessor(message.Body);
+                        var success = await asyncMessageProcessor(message.Body);
                         if (success)
                         {
                             await DeleteMessageAsync(queueName, message.ReceiptHandle);
                         }
                     }
                 }
-            }, cancellationToken.Token);
-
-            return cancellationToken;
+            }, cancellationToken);
         }
 
         /// <summary>
@@ -356,7 +373,7 @@ namespace NetSQS
             return PollQueueAsync(queueName, pollWaitTime, maxNumberOfMessagesPerPoll, asyncMessageProcessor);
         }
 
-        
+
 
         /// <summary>
         /// Waits for the queue to be available by checking its availability for a given number of retries, then polls the queue for new messages.
@@ -530,7 +547,7 @@ namespace NetSQS
                 QueueUrl = queueUrl,
                 AttributeNames = attributeNames,
 
-                // Valid values: 1 to 10, Default: 1. See: https://github.com/aws/aws-sdk-net/blob/master/sdk/src/Services/SQS/Generated/Model/ReceiveMessageRequest.cs 
+                // Valid values: 1 to 10, Default: 1. See: https://github.com/aws/aws-sdk-net/blob/master/sdk/src/Services/SQS/Generated/Model/ReceiveMessageRequest.cs
                 MaxNumberOfMessages = maxNumberOfMessages ?? 1,
                 MessageAttributeNames = messageAttributeNames,
                 ReceiveRequestAttemptId = receiveRequestAttemptId,

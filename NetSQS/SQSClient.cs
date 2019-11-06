@@ -507,7 +507,7 @@ namespace NetSQS
             };
 
             ReceiveMessageResponse response = null;
-            var retryCounter = 0;
+            var delayTime = 0;
 
             while (response == null)
             {
@@ -517,10 +517,10 @@ namespace NetSQS
                 }
                 catch (AmazonSQSException e)
                 {
-                    if (e.Message.EndsWith("Throttled") && retryCounter < 10)
+                    if (e.Message.EndsWith("Throttled"))
                     {
-                        retryCounter += 1;
-                        await Task.Delay(retryCounter * 3);
+                        if (delayTime < 100) delayTime += 4;
+                        await Task.Delay(delayTime);
                     }
                     else
                     {

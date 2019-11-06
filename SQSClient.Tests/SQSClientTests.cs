@@ -1,6 +1,7 @@
 using Amazon.SQS.Model;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -125,15 +126,18 @@ namespace NetSQS.Tests
             await client.SendMessageAsync(message, queueName);
 
             MessagePicked = false;
-            var cancellationToken = client.StartMessageReceiver(queueName, 1, 1, (string receivedMessage) =>
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+            client.StartMessageReceiver(queueName, 1, 1, (string receivedMessage) =>
             {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
                 return true;
-            });
+            }, cancellationToken);
 
             Task.Delay(1000).Wait();
-            cancellationToken.Cancel();
+            cancellationTokenSource.Cancel();
 
             Assert.True(MessagePicked);
             MessagePicked = false;
@@ -153,15 +157,18 @@ namespace NetSQS.Tests
 
             MessagePicked = false;
 
-            var cancellationToken = client.StartMessageReceiver(queueName, 1, 1, async (string receivedMessage) =>
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+            client.StartMessageReceiver(queueName, 1, 1, async (string receivedMessage) =>
             {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
                 return await Task.FromResult(true);
-            });
+            }, cancellationToken);
 
             Task.Delay(1000).Wait();
-            cancellationToken.Cancel();
+            cancellationTokenSource.Cancel();
 
             Assert.True(MessagePicked);
             MessagePicked = false;
@@ -175,11 +182,14 @@ namespace NetSQS.Tests
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
 
-            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, async (string message) =>
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+            Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, async (string message) =>
              {
                  Assert.Equal("Hello World!", message);
                  return await Task.FromResult(true);
-             }));
+             }, cancellationToken));
         }
 
         [Fact]
@@ -188,11 +198,14 @@ namespace NetSQS.Tests
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
 
-            Assert.Throws<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, (string message) =>
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+            Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, (string message) =>
             {
                 Assert.Equal("Hello World!", message);
                 return true;
-            }));
+            }, cancellationToken));
         }
 
         private SQSClient CreateSQSClient()

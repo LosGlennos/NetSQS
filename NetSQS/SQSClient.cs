@@ -249,6 +249,7 @@ namespace NetSQS
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
+        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor)
         {
             var cancellationTokenSource = new CancellationTokenSource();
@@ -265,6 +266,7 @@ namespace NetSQS
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
+        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor)
         {
             var cancellationTokenSource = new CancellationTokenSource();
@@ -316,6 +318,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
+        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor)
         {
@@ -384,6 +387,7 @@ namespace NetSQS
         /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
         /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
+        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
         public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor)
         {

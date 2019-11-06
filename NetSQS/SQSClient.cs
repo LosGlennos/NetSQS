@@ -166,9 +166,10 @@ namespace NetSQS
 
                 attributes.Add("FifoQueue", "true");
                 attributes.Add("ContentBasedDeduplication", "true");
-            } else if (queueName.EndsWith(".fifo"))
+            }
+            else if (queueName.EndsWith(".fifo"))
             {
-                    throw new ArgumentException("Non fifo queue names can't end with .fifo");
+                throw new ArgumentException("Non fifo queue names can't end with .fifo");
             }
 
             var request = new CreateQueueRequest
@@ -501,7 +502,29 @@ namespace NetSQS
                 WaitTimeSeconds = waitTimeSeconds
             };
 
-            var response = await _client.ReceiveMessageAsync(request);
+            ReceiveMessageResponse response = null;
+            var retryCounter = 0;
+
+            while (response == null)
+            {
+                try
+                {
+                    response = await _client.ReceiveMessageAsync(request);
+                }
+                catch (AmazonSQSException e)
+                {
+                    if (e.Message.EndsWith("Throttled") && retryCounter < 10)
+                    {
+                        retryCounter += 1;
+                        await Task.Delay(retryCounter * 3);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
             return response;
         }
 

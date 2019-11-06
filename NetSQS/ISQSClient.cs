@@ -175,5 +175,83 @@ namespace NetSQS
         /// <returns></returns>
         Task StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
             Func<string, bool> messageProcessor, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
+        ///
+        /// Message should be explicitly acked to be removed from queue.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
+        /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
+        /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
+        /// <returns></returns>
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
+            Action<ISQSMessage> messageProcessor, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
+        ///
+        /// Message should be explicitly acked to be removed from queue.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
+        /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
+        /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
+        /// <returns></returns>
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
+            Func<ISQSMessage, Task> asyncMessageProcessor, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Waits for the queue to be available by checking its availability for a given number of retries, then continuously checks the queue for new messages.
+        /// Handles the messages on the queue in the processor specified.
+        /// Will start a long running task in a parallel thread that is not awaited.
+        ///
+        /// Message should be explicitly acked to be removed from queue.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
+        /// <param name="numRetries">Number of connection retries to the queue.</param>
+        /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
+        /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
+        /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
+        /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
+        /// <returns></returns>
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds,
+            int maxNumberOfMessagesPerPoll,
+            int numRetries, int minBackOff, int maxBackOff, Action<ISQSMessage> messageProcessor,
+            CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Waits for the queue to be available by checking its availability for a given number of retries, then continuously checks the queue for new messages.
+        /// Handles the messages on the queue in the processor specified.
+        /// Will start a long running task in a parallel thread that is not awaited.
+        ///
+        /// Message should be explicitly acked to be removed from queue.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
+        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
+        /// <param name="numRetries">Number of connection retries to the queue.</param>
+        /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
+        /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
+        /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
+        /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
+        /// <returns></returns>
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds,
+            int maxNumberOfMessagesPerPoll,
+            int numRetries, int minBackOff, int maxBackOff, Func<ISQSMessage, Task> asyncMessageProcessor,
+            CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Deletes a message from the queue
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="receiptHandle">The identifier of the operation that received the message</param>
+        /// <returns></returns>
+        Task DeleteMessageAsync(string queueName, string receiptHandle);
     }
 }

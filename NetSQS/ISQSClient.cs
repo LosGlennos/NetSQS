@@ -61,7 +61,7 @@ namespace NetSQS
         /// Will start a long running task in a parallel thread that is not awaited.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The amount of time the client will look for messages on the queue</param>
+        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
         /// <param name="numRetries">Number of connection retries to the queue.</param>
         /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
@@ -69,7 +69,7 @@ namespace NetSQS
         /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
         [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime,
+        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds,
             int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor);
 
@@ -79,7 +79,7 @@ namespace NetSQS
         /// Will start a long running task in a parallel thread that is not awaited.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The amount of time the client will look for messages on the queue</param>
+        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
         /// <param name="numRetries">Number of connection retries to the queue.</param>
         /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
@@ -87,7 +87,7 @@ namespace NetSQS
         /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
         /// <returns></returns>
-        Task StartMessageReceiver(string queueName, int pollWaitTime,
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds,
             int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor,
             CancellationToken cancellationToken);
@@ -98,7 +98,7 @@ namespace NetSQS
         /// Will start a long running task in a parallel thread that is not awaited.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The amount of time the client will look for messages on the queue</param>
+        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
         /// <param name="numRetries">Number of connection retries to the queue.</param>
         /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
@@ -106,7 +106,7 @@ namespace NetSQS
         /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <returns></returns>
         [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime,
+        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds,
             int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor);
 
@@ -116,7 +116,7 @@ namespace NetSQS
         /// Will start a long running task in a parallel thread that is not awaited.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The amount of time the client will look for messages on the queue</param>
+        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
         /// <param name="numRetries">Number of connection retries to the queue.</param>
         /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
@@ -124,7 +124,7 @@ namespace NetSQS
         /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
         /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
         /// <returns></returns>
-        Task StartMessageReceiver(string queueName, int pollWaitTime,
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds,
             int maxNumberOfMessagesPerPoll,
             int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor,
             CancellationToken cancellationToken);
@@ -133,48 +133,48 @@ namespace NetSQS
         /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
         [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
             Func<string, Task<bool>> asyncMessageProcessor);
 
         /// <summary>
         /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
         /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
         /// <returns></returns>
-        Task StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
             Func<string, Task<bool>> asyncMessageProcessor, CancellationToken cancellationToken);
 
         /// <summary>
         /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
         /// <returns></returns>
         [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
             Func<string, bool> messageProcessor);
 
         /// <summary>
         /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTime">The waiting time for each poll of the queue</param>
+        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
         /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
         /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
         /// <param name="cancellationToken">The receiver process will check the status of this token and cancel the long running process if cancellation is requested.</param>
         /// <returns></returns>
-        Task StartMessageReceiver(string queueName, int pollWaitTime, int maxNumberOfMessagesPerPoll,
+        Task StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
             Func<string, bool> messageProcessor, CancellationToken cancellationToken);
 
         /// <summary>

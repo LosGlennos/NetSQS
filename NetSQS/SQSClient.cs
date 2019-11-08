@@ -714,7 +714,8 @@ namespace NetSQS
                             var messageAttributes = new Dictionary<string, string>();
                             foreach (var messageAttribute in message.MessageAttributes)
                             {
-                                messageAttributes.Add(messageAttribute.Key, messageAttribute.Value.StringValue);
+                                if (messageAttribute.Value.StringValue != null)
+                                    messageAttributes.Add(messageAttribute.Key, messageAttribute.Value.StringValue);
                             }
 
                             sqsMessage.MessageAttributes = messageAttributes;

@@ -177,6 +177,46 @@ namespace NetSQS.Tests
         }
 
         [Fact]
+        public async Task StartMessageReceiver_ShouldOnlyPickMessageTwoMessages_IfMessageIsAcked()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid().ToString()}";
+            await client.CreateStandardQueueAsync(queueName);
+
+            var firstMessage = "Foo";
+            await client.SendMessageAsync(firstMessage, queueName);
+            var secondMessage = "Bar";
+            await client.SendMessageAsync(secondMessage, queueName);
+
+            var numberOfPickedMessages = 0;
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+            
+
+            client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
+            {
+                numberOfPickedMessages += 1;
+                if (numberOfPickedMessages == 1)
+                {
+                    Assert.Equal("Foo", receivedMessage.Body);
+                }
+                else if (numberOfPickedMessages == 2)
+                {
+                    Assert.Equal("Foo", receivedMessage.Body);
+                }
+                await receivedMessage.Ack();
+            }, cancellationToken);
+
+            Task.Delay(5000).Wait();
+            cancellationTokenSource.Cancel();
+
+            Assert.Equal(1, numberOfPickedMessages);
+
+            await client.DeleteQueueAsync(queueName);
+        }
+
+        [Fact]
         public void StartMessageReceiver_ShouldThrowErrorWithAsyncMethod_IfQueueDoesNotExist()
         {
             var queueName = $"{Guid.NewGuid().ToString()}";

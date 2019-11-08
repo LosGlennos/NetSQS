@@ -56,27 +56,58 @@ public async Task AddSomethingToDb(string message)
 {
     await myDbContext.Messages.Add(message);
     await myDbContext.SaveChangesAsync();
+	return true;
 }
 
 public void WriteToConsole(string message)
 {
     Console.WriteLine(message);
+	return true;
 }
 
 public MessagePolling() 
 {
-    var fooCancellationToken = client.StartMessageReceiver("nameofthequeue", 0, 1, AddSomethingToDb);
-    var barCancellationToken = client.StartMessageReceiver("nameofthequeue", 0, 1, WriteToConsole);
+	var  = new CancellationTokenSource();
+	var cancellationToken = cancellationTokenSource.Token;
+
+    client.StartMessageReceiver("nameofthequeue", 0, 1, AddSomethingToDb, cancellationToken);
+    client.StartMessageReceiver("nameofthequeue", 0, 1, WriteToConsole, cancellationToken);
     
     // If you want to cancel the parallel tasks created by these methods. Do this:
-    fooCancellationToken.Cancel();
-    barCancellationToken.Cancel();
+    cancellationTokenSource.Cancel();
 }
 ```
 You can also use `StartMessageReceiver` to automatically retry a connection to the queue if there has been an error while connecting. This is specified with a number of retries and a min and max backoff for the retry:
 ```csharp
-var task = StartMessageReceiver(queueName: "nameofthequeue", pollWaitTime: 0, maxNumberOfMessagesPerPoll: 1, numRetries: 20, minBackOff: 1, maxBackOff: 20, AddSomethingToDb);
+var task = StartMessageReceiver(queueName: "nameofthequeue", pollWaitTime: 0, maxNumberOfMessagesPerPoll: 1, numRetries: 20, minBackOff: 1, maxBackOff: 20, AddSomethingToDb, cancellationToken);
 ```
+
+#### Explicit acking of messages from queue
+
+If you need to explicitly acknowledge a message before a processor is finished you can do this:
+
+```csharp
+public Task MessageProcessor(ISQSMessage message) 
+{
+	var messageBody = message.Body;
+	await myDbContext.Messages.Add(message);
+
+	message.Ack();
+}
+
+public MessagePolling() 
+{
+	var  = new CancellationTokenSource();
+	var cancellationToken = cancellationTokenSource.Token;
+
+    client.StartMessageReceiver("nameofthequeue", 0, 1, MessageProcessor, cancellationToken);
+    
+    // If you want to cancel the parallel tasks created by these methods. Do this:
+    cancellationTokenSource.Cancel();
+}
+```
+
+This can be useful if you have long processing times and you want to make sure that the message is deleted before, for example, commiting a transaction.
 
 ## Contributing
 If you want to contribute you need a running version of SQS in your local kubernetes cluster. You can start a local running instance by applying the yaml-file in `deployment_files/sqs.yaml`.

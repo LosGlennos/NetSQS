@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace NetSQS
 {
@@ -21,7 +23,7 @@ namespace NetSQS
         /// <param name="awsSecretAccessKey">If not specified, AWS will pick this using the Default Credential Provider Chain</param>
         public static void AddSQSService(this IServiceCollection services, string endpoint, string region, string awsAccessKeyId = null, string awsSecretAccessKey = null)
         {
-            services.AddSingleton<ISQSClient>(s => new SQSClient(endpoint, region, awsAccessKeyId, awsSecretAccessKey));
+            services.TryAddSingleton<ISQSClient>(s => new SQSClient(endpoint, region, awsAccessKeyId, awsSecretAccessKey));
         }
     }
 
@@ -77,8 +79,9 @@ namespace NetSQS
         /// </summary>
         /// <param name="message">The message to be put on the queue</param>
         /// <param name="queueName">The name of the queue</param>
+        /// <param name="messageAttributes">A dictionary of string values to include in the message attributes</param>
         /// <returns></returns>
-        public async Task<string> SendMessageAsync(string message, string queueName)
+        public async Task<string> SendMessageAsync(string message, string queueName, Dictionary<string, string> messageAttributes = null)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
 
@@ -86,8 +89,25 @@ namespace NetSQS
             {
                 QueueUrl = queueUrl,
                 MessageBody = message,
-                MessageGroupId = queueName.EndsWith(".fifo") ? queueUrl : null,
+                MessageGroupId = queueName.EndsWith(".fifo") ? queueUrl : null
             };
+
+            if (messageAttributes != null)
+            {
+                var sqsMessageAttributes = new Dictionary<string, MessageAttributeValue>();
+                foreach (var attribute in messageAttributes)
+                {
+                    sqsMessageAttributes.Add(
+                        attribute.Key, 
+                        new MessageAttributeValue
+                        {
+                            StringValue = attribute.Value, 
+                            DataType = "String"
+                        });
+                }
+
+                request.MessageAttributes = sqsMessageAttributes;
+            }
 
             SendMessageResponse response = null;
             var retryCounter = 0;
@@ -561,7 +581,7 @@ namespace NetSQS
                     await GetQueueUrlAsync(queueName);
                     return;
                 }
-                catch (AmazonSQSException e)
+                catch (AmazonSQSException)
                 {
                     var timeSleep = new Random().Next(maxBackOff - minBackOff) + minBackOff;
                     var timeSleepMilliseconds = (int)TimeSpan.FromSeconds(timeSleep).TotalMilliseconds;
@@ -678,8 +698,9 @@ namespace NetSQS
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
+                    var messageAttributesQuery = new List<string> { "All" };
                     var receiveMessageResponse = await ReceiveMessageAsync(queueName, waitTimeSeconds: pollWaitTimeSeconds,
-                        maxNumberOfMessages: maxNumberOfMessagesPerPoll);
+                        maxNumberOfMessages: maxNumberOfMessagesPerPoll, messageAttributeNames: messageAttributesQuery);
 
                     foreach (var message in receiveMessageResponse.Messages)
                     {
@@ -687,6 +708,18 @@ namespace NetSQS
                         {
                             Body = message.Body
                         };
+
+                        if (message.MessageAttributes.Count > 0)
+                        {
+                            var messageAttributes = new Dictionary<string, string>();
+                            foreach (var messageAttribute in message.MessageAttributes)
+                            {
+                                if (messageAttribute.Value.StringValue != null)
+                                    messageAttributes.Add(messageAttribute.Key, messageAttribute.Value.StringValue);
+                            }
+
+                            sqsMessage.MessageAttributes = messageAttributes;
+                        }
 
                         await asyncMessageProcessor(sqsMessage);
                     }

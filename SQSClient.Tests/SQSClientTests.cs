@@ -1,5 +1,6 @@
 using Amazon.SQS.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -203,7 +204,7 @@ namespace NetSQS.Tests
                 }
                 else if (numberOfPickedMessages == 2)
                 {
-                    Assert.Equal("Foo", receivedMessage.Body);
+                    Assert.Equal("Bar", receivedMessage.Body);
                 }
                 await receivedMessage.Ack();
             }, cancellationToken);
@@ -211,7 +212,45 @@ namespace NetSQS.Tests
             Task.Delay(5000).Wait();
             cancellationTokenSource.Cancel();
 
-            Assert.Equal(1, numberOfPickedMessages);
+            Assert.Equal(2, numberOfPickedMessages);
+
+            await client.DeleteQueueAsync(queueName);
+        }
+
+        [Fact]
+        public async Task StartMessageReceiver_ShouldGetMessageAttributes_WhenSupplied()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid().ToString()}";
+            await client.CreateStandardQueueAsync(queueName);
+
+            var firstMessage = "Foo";
+            var messageAttributes = new Dictionary<string, string>
+            {
+                {"TestAttribute", "TestAttributeValue"}
+            };
+
+            await client.SendMessageAsync(firstMessage, queueName, messageAttributes);
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+
+            client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
+            {
+                Assert.Equal("Foo", receivedMessage.Body);
+
+                var attributes = receivedMessage.MessageAttributes;
+
+                var exists = attributes.TryGetValue("TestAttribute", out var attribute);
+                Assert.Equal(attribute, "TestAttributeValue");
+                Assert.True(exists);
+
+                await receivedMessage.Ack();
+            }, cancellationToken);
+
+            Task.Delay(5000).Wait();
+            cancellationTokenSource.Cancel();
 
             await client.DeleteQueueAsync(queueName);
         }

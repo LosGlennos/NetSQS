@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NetSQS
 {
@@ -21,6 +22,11 @@ namespace NetSQS
         /// The content of the message picked off the queue
         /// </summary>
         public string Body { get; set; }
+        /// <summary>
+        /// A dictionary of MessageAttributes sent with the message
+        /// </summary>
+        public Dictionary<string, string> MessageAttributes { get; set; }
+        
         private SQSClient Client { get; }
         private string QueueName { get; }
         private string ReceiptHandle { get; }
@@ -41,6 +47,11 @@ namespace NetSQS
         /// The content of the message picked off the queue
         /// </summary>
         string Body { get; set; }
+
+        /// <summary>
+        /// A dictionary of MessageAttributes sent with the message
+        /// </summary>
+        Dictionary<string, string> MessageAttributes { get; set; }
 
         /// <summary>
         /// Deletes the message from the Queue when called.

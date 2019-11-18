@@ -94,18 +94,7 @@ namespace NetSQS
 
             if (messageAttributes != null)
             {
-                var sqsMessageAttributes = new Dictionary<string, MessageAttributeValue>();
-                foreach (var attribute in messageAttributes)
-                {
-                    sqsMessageAttributes.Add(
-                        attribute.Key, 
-                        new MessageAttributeValue
-                        {
-                            StringValue = attribute.Value, 
-                            DataType = "String"
-                        });
-                }
-
+                var sqsMessageAttributes = messageAttributes.ToDictionary(attribute => attribute.Key, attribute => new MessageAttributeValue {StringValue = attribute.Value, DataType = "String"});
                 request.MessageAttributes = sqsMessageAttributes;
             }
 
@@ -132,6 +121,54 @@ namespace NetSQS
             }
 
             return response.MessageId;
+        }
+
+        
+        
+        /// <summary>
+        /// Puts a batch of messages on the queue
+        /// </summary>
+        /// <param name="messages">An array of messages to be put on the queue</param>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
+        public async Task<BatchResponse> SendMessageBatchAsync(BatchMessageRequest[] batchMessages, string queueName)
+        {
+            var queueUrl = await GetQueueUrlAsync(queueName);
+
+            var sendMessageBatchRequest = new SendMessageBatchRequest
+            {
+                Entries = batchMessages.Select((v, i) => new SendMessageBatchRequestEntry(i.ToString(), v.Message)
+                {
+                    MessageAttributes = v.MessageAttributes.ToDictionary(attribute => attribute.Key, attribute => new MessageAttributeValue {StringValue = attribute.Value, DataType = "String"}),
+                    MessageGroupId = queueName.EndsWith(".fifo") ? queueUrl : null
+                }
+                ).ToList<SendMessageBatchRequestEntry>(),
+                QueueUrl = queueUrl
+            };
+
+            var retryCounter = 0;
+            SendMessageBatchResponse awsBatchResponse = null;
+            while (awsBatchResponse == null)
+            {
+                try
+                {
+                    awsBatchResponse = await _client.SendMessageBatchAsync(sendMessageBatchRequest);
+                }
+                catch (AmazonSQSException e)
+                {
+                    if (e.Message.EndsWith("Throttled") && retryCounter < 10)
+                    {
+                        retryCounter += 1;
+                        await Task.Delay(retryCounter * 3);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            return BatchResponse.FromAwsBatchResponse(awsBatchResponse, batchMessages);
         }
 
         /// <summary>

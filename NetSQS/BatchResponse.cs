@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Amazon.SQS.Model;
 
 namespace NetSQS
@@ -7,12 +6,12 @@ namespace NetSQS
     /// <summary>
     /// The result from sending a batch of messages to a queue. 
     /// </summary>
-    public struct BatchResponse
+    public class BatchResponse : IBatchResponse
     {
         /// <summary>
         /// Metadata on the success/failure of sending the message
         /// </summary>
-        public struct SendResult
+        public class SendResult
         {
             public bool Success;
             public string MessageId;
@@ -23,12 +22,12 @@ namespace NetSQS
         /// <summary>
         /// True if all the messages in the batch were processed correctly
         /// </summary>
-        public bool Success;
+        public bool Success { get; set; }
 
         /// <summary>
-        /// An array of metadata containing information on whether each message was processed successfully
+        /// An array of message send results. Used to determine the status of sent messages
         /// </summary>
-        public SendResult[] SendResults;
+        public SendResult[] SendResults { get; set; }
 
         /// <summary>
         /// Returns an array of successfully sent messages

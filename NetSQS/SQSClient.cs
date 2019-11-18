@@ -123,15 +123,14 @@ namespace NetSQS
             return response.MessageId;
         }
 
-        
-        
+
         /// <summary>
         /// Puts a batch of messages on the queue
         /// </summary>
-        /// <param name="messages">An array of messages to be put on the queue</param>
+        /// <param name="batchMessages">An array of messages to be put on the queue</param>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
-        public async Task<BatchResponse> SendMessageBatchAsync(BatchMessageRequest[] batchMessages, string queueName)
+        public async Task<IBatchResponse> SendMessageBatchAsync(BatchMessageRequest[] batchMessages, string queueName)
         {
             var queueUrl = await GetQueueUrlAsync(queueName);
 

@@ -18,6 +18,15 @@ namespace NetSQS
         Task<string> SendMessageAsync(string message, string queueName, Dictionary<string, string> messageAttributes = null);
 
         /// <summary>
+        /// Puts a batch of messages on the queue
+        /// </summary>
+        /// <param name="messages">An array of messages to be put on the queue</param>
+        /// <param name="queueName">The name of the queue</param>
+        /// <param name="messageAttributes">A dictionary of string values to include in the message attributes</param>
+        /// <returns></returns>
+        Task<IBatchResponse> SendMessageBatchAsync(BatchMessageRequest[] batchMessages, string queueName);
+
+        /// <summary>
         /// Creates a Standard queue with default values
         /// </summary>
         /// <param name="queueName">The name of the queue</param>

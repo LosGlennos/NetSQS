@@ -114,6 +114,78 @@ namespace NetSQS.Tests
             await client.DeleteQueueAsync(queueName);
         }
 
+        [Fact]
+        public async Task SendBatchMessageAsync_ShouldPutMessageOnQueue()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid()}";
+            await client.CreateStandardQueueAsync(queueName);
+
+            var batch = new List<BatchMessageRequest>
+            {
+                new BatchMessageRequest("testMessage1", new Dictionary<string, string>
+                {
+                    {"key1", "value1"}
+                }),
+                new BatchMessageRequest("testMessage2", new Dictionary<string, string>
+                {
+                    {"key2", "value2"}
+                })
+            }.ToArray();
+
+            var response = await client.SendMessageBatchAsync(batch, queueName);
+
+            Assert.Empty(response.GetFailed());
+            Assert.Equal(2, response.GetSuccessful().Length);
+            Assert.True(response.Success);
+
+            Assert.True(response.SendResults[0].Success);
+            Assert.Equal("testMessage1", response.SendResults[0].Message);
+            Assert.Null(response.SendResults[0].Error);
+
+            Assert.True(response.SendResults[1].Success);
+            Assert.Equal("testMessage2", response.SendResults[1].Message);
+            Assert.Null(response.SendResults[1].Error);
+
+            await client.DeleteQueueAsync(queueName);
+        }
+
+        [Fact]
+        public async Task SendFifoBatchMessageAsync_ShouldPutMessageOnQueue()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid().ToString()}.fifo";
+            await client.CreateStandardFifoQueueAsync(queueName);
+
+            var batch = new List<BatchMessageRequest>
+            {
+                new BatchMessageRequest("testMessage1", new Dictionary<string, string>
+                {
+                    {"key1", "value1"}
+                }),
+                new BatchMessageRequest("testMessage2", new Dictionary<string, string>
+                {
+                    {"key2", "value2"}
+                })
+            }.ToArray();
+
+            var response = await client.SendMessageBatchAsync(batch, queueName);
+
+            Assert.Empty(response.GetFailed());
+            Assert.Equal(2, response.GetSuccessful().Length);
+            Assert.True(response.Success);
+
+            Assert.True(response.SendResults[0].Success);
+            Assert.Equal("testMessage1", response.SendResults[0].Message);
+            Assert.Null(response.SendResults[0].Error);
+
+            Assert.True(response.SendResults[1].Success);
+            Assert.Equal("testMessage2", response.SendResults[1].Message);
+            Assert.Null(response.SendResults[1].Error);
+
+            await client.DeleteQueueAsync(queueName);
+        }
+
         private bool MessagePicked { get; set; }
 
         [Fact]
@@ -130,7 +202,7 @@ namespace NetSQS.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            client.StartMessageReceiver(queueName, 1, 1, (string receivedMessage) =>
+           _ = client.StartMessageReceiver(queueName, 1, 1, (string receivedMessage) =>
             {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
@@ -161,7 +233,7 @@ namespace NetSQS.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            client.StartMessageReceiver(queueName, 1, 1, async (string receivedMessage) =>
+            _ = client.StartMessageReceiver(queueName, 1, 1, async (string receivedMessage) =>
             {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
@@ -193,9 +265,9 @@ namespace NetSQS.Tests
 
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
-            
 
-            client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
+
+            _ = client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
             {
                 numberOfPickedMessages += 1;
                 if (numberOfPickedMessages == 1)
@@ -236,7 +308,7 @@ namespace NetSQS.Tests
             var cancellationToken = cancellationTokenSource.Token;
 
 
-            client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
+            _ = client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
             {
                 Assert.Equal("Foo", receivedMessage.Body);
 

@@ -43,6 +43,31 @@ var queueUrl = await client.CreateQueueAsync(queueName: "nameofthequeue", isFifo
 var messageId = await client.SendMessageAsync("yourmessage", "nameofthequeue");
 ```
 
+### Putting a batch of messages on the queue
+```csharp
+var batch = new BatchMessageRequest[2]
+{
+    new BatchMessageRequest("testMessage1", new Dictionary<string, string>
+    {
+        {"attrubuteName", "attributeValue"}
+    }),
+    new BatchMessageRequest("testMessage2", new Dictionary<string, string>
+    {
+        {"attrubuteName", "attributeValue"}
+    })
+};
+
+var response =  await client.SendMessageBatchAsync(batch, "nameofthequeue");
+
+if (!response.Success)
+{
+    var failed = response.GetFailed();
+    # Do something with failed messages.
+}
+
+var sentMessageIds = response.GetSuccessful().Select(x => x.MessageId).ToArray();
+```
+
 ### Deleting a queue
 ```csharp
 var successfullyDeleted = await client.DeleteQueueAsync("nameofthequeue");

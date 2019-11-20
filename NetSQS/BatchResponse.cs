@@ -15,7 +15,7 @@ namespace NetSQS
         {
             public bool Success;
             public string MessageId;
-            public string Message;
+            public BatchMessageRequest MessageRequest;
             public string Error;
         }
 
@@ -69,7 +69,7 @@ namespace NetSQS
                 {
                     Success = true,
                     MessageId = x.MessageId,
-                    Message = messageBatch[messageId].Message,
+                    MessageRequest = messageBatch[messageId],
                     Error = null
                 }).FirstOrDefault();
 
@@ -77,11 +77,11 @@ namespace NetSQS
                 {
                     Success = false,
                     MessageId = null,
-                    Message = messageBatch[messageId].Message,
+                    MessageRequest = messageBatch[messageId],
                     Error = x.Message,
                 }).FirstOrDefault();
 
-                result.SendResults[messageId] = successSendResult.MessageId != null ? successSendResult : failedSendResult;
+                result.SendResults[messageId] = successSendResult?.MessageId != null ? successSendResult : failedSendResult;
             }
 
             result.Success = !batchResponse.Failed.Any();

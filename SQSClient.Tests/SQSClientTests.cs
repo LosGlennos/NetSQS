@@ -140,11 +140,11 @@ namespace NetSQS.Tests
             Assert.True(response.Success);
 
             Assert.True(response.SendResults[0].Success);
-            Assert.Equal("testMessage1", response.SendResults[0].Message);
+            Assert.Equal("testMessage1", response.SendResults[0].RequestObject.Message);
             Assert.Null(response.SendResults[0].Error);
 
             Assert.True(response.SendResults[1].Success);
-            Assert.Equal("testMessage2", response.SendResults[1].Message);
+            Assert.Equal("testMessage2", response.SendResults[1].RequestObject.Message);
             Assert.Null(response.SendResults[1].Error);
 
             await client.DeleteQueueAsync(queueName);
@@ -176,11 +176,11 @@ namespace NetSQS.Tests
             Assert.True(response.Success);
 
             Assert.True(response.SendResults[0].Success);
-            Assert.Equal("testMessage1", response.SendResults[0].Message);
+            Assert.Equal("testMessage1", response.SendResults[0].RequestObject.Message);
             Assert.Null(response.SendResults[0].Error);
 
             Assert.True(response.SendResults[1].Success);
-            Assert.Equal("testMessage2", response.SendResults[1].Message);
+            Assert.Equal("testMessage2", response.SendResults[1].RequestObject.Message);
             Assert.Null(response.SendResults[1].Error);
 
             await client.DeleteQueueAsync(queueName);

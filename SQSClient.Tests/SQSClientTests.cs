@@ -141,13 +141,75 @@ namespace NetSQS.Tests
 
             Assert.True(response.SendResults[0].Success);
             Assert.Equal("testMessage1", response.SendResults[0].MessageRequest.Message);
+            Assert.Equal("value1", response.SendResults[0].MessageRequest.MessageAttributes["key1"]);
             Assert.Null(response.SendResults[0].Error);
 
             Assert.True(response.SendResults[1].Success);
             Assert.Equal("testMessage2", response.SendResults[1].MessageRequest.Message);
+            Assert.Equal("value2", response.SendResults[1].MessageRequest.MessageAttributes["key2"]);
             Assert.Null(response.SendResults[1].Error);
 
             await client.DeleteQueueAsync(queueName);
+        }
+
+        [Fact]
+        public async Task SendBatchMessageAsyncWithNoAttributes_ShouldPutMessageOnQueue()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid()}";
+            await client.CreateStandardQueueAsync(queueName);
+
+            var batch = new List<BatchMessageRequest>
+            {
+                new BatchMessageRequest("testMessage1"),
+                new BatchMessageRequest("testMessage2", new Dictionary<string, string>
+                {
+                    {"key2", "value2"}
+                })
+            }.ToArray();
+
+            var response = await client.SendMessageBatchAsync(batch, queueName);
+
+            Assert.Empty(response.GetFailed());
+            Assert.Equal(2, response.GetSuccessful().Length);
+            Assert.True(response.Success);
+
+            Assert.True(response.SendResults[0].Success);
+            Assert.Equal("testMessage1", response.SendResults[0].MessageRequest.Message);
+            Assert.Null(response.SendResults[0].Error);
+
+            Assert.True(response.SendResults[1].Success);
+            Assert.Equal("testMessage2", response.SendResults[1].MessageRequest.Message);
+            Assert.Equal("value2", response.SendResults[1].MessageRequest.MessageAttributes["key2"]);
+            Assert.Null(response.SendResults[1].Error);
+
+            await client.DeleteQueueAsync(queueName);
+        }
+
+        [Fact]
+        public async Task SendTooManyBatchMessageAsync_ShouldError()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid()}";
+            await client.CreateStandardQueueAsync(queueName);
+
+            var batch = new List<BatchMessageRequest>
+            {
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+                new BatchMessageRequest("testMessage"),
+            }.ToArray();
+
+            await Assert.ThrowsAsync<ArgumentException>(() => client.SendMessageBatchAsync(batch, queueName));
         }
 
         [Fact]
@@ -177,10 +239,12 @@ namespace NetSQS.Tests
 
             Assert.True(response.SendResults[0].Success);
             Assert.Equal("testMessage1", response.SendResults[0].MessageRequest.Message);
+            Assert.Equal("value1", response.SendResults[0].MessageRequest.MessageAttributes["key1"]);
             Assert.Null(response.SendResults[0].Error);
 
             Assert.True(response.SendResults[1].Success);
             Assert.Equal("testMessage2", response.SendResults[1].MessageRequest.Message);
+            Assert.Equal("value2", response.SendResults[1].MessageRequest.MessageAttributes["key2"]);
             Assert.Null(response.SendResults[1].Error);
 
             await client.DeleteQueueAsync(queueName);

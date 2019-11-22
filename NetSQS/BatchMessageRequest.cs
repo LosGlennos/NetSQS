@@ -24,10 +24,10 @@ namespace NetSQS
         /// </summary>
         /// <param name="message">The message to be sent</param>
         /// <param name="messageAttributes">Attributes to be attached to the message</param>
-        public BatchMessageRequest(string message, Dictionary<string, string> messageAttributes)
+        public BatchMessageRequest(string message, Dictionary<string, string> messageAttributes = null)
         {
             Message = message;
-            MessageAttributes = messageAttributes;
+            MessageAttributes = messageAttributes ?? new Dictionary<string, string>();
         }
     }
 }

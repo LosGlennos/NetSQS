@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -123,15 +123,21 @@ namespace NetSQS
             return response.MessageId;
         }
 
-
         /// <summary>
         /// Puts a batch of messages on the queue
+        ///
+        /// Supports a maximum of 10 messages. 
         /// </summary>
         /// <param name="batchMessages">An array of messages to be put on the queue</param>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
         public async Task<IBatchResponse> SendMessageBatchAsync(BatchMessageRequest[] batchMessages, string queueName)
         {
+            if (batchMessages.Length > 10)
+            {
+                throw new ArgumentException($"AWS SQS supports a max message number of 10 messages. {batchMessages.Length} were received.", nameof(batchMessages));
+            }
+
             var queueUrl = await GetQueueUrlAsync(queueName);
 
             var sendMessageBatchRequest = new SendMessageBatchRequest

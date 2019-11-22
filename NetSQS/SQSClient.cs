@@ -370,7 +370,7 @@ namespace NetSQS
         /// <summary>
         /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
         ///
-        /// RequestObject should be explicitly acked to be removed from queue.
+        /// Message should be explicitly acked to be removed from queue.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
@@ -387,7 +387,7 @@ namespace NetSQS
         /// <summary>
         /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
         ///
-        /// RequestObject should be explicitly acked to be removed from queue.
+        /// Message should be explicitly acked to be removed from queue.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
@@ -406,7 +406,7 @@ namespace NetSQS
         /// Handles the messages on the queue in the processor specified.
         /// Will start a long running task in a parallel thread that is not awaited.
         ///
-        /// RequestObject should be explicitly acked to be removed from queue.
+        /// Message should be explicitly acked to be removed from queue.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
@@ -443,7 +443,7 @@ namespace NetSQS
         /// Handles the messages on the queue in the processor specified.
         /// Will start a long running task in a parallel thread that is not awaited.
         ///
-        /// RequestObject should be explicitly acked to be removed from queue.
+        /// Message should be explicitly acked to be removed from queue.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>

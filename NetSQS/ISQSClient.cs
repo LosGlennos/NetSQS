@@ -263,5 +263,12 @@ namespace NetSQS
         /// <param name="receiptHandle">The identifier of the operation that received the message</param>
         /// <returns></returns>
         Task DeleteMessageAsync(string queueName, string receiptHandle);
+
+        /// <summary>
+        /// Gets information regarding the number of messages on a queue.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
+        Task<NumberOfMessagesResponse> GetNumberOfMessagesOnQueue(string queueName);
     }
 }

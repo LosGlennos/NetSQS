@@ -423,6 +423,22 @@ namespace NetSQS.Tests
             }, cancellationToken));
         }
 
+        [Fact]
+        public async Task GetNumberOfMessagesOnQueue_ShouldReturnApproximateTotalNumberOfMessages()
+        {
+            var client = CreateSQSClient();
+            var queueName = $"{Guid.NewGuid().ToString()}.fifo";
+            await client.CreateStandardFifoQueueAsync(queueName);
+            var message = "Hello World!";
+            await client.SendMessageAsync(message, queueName);
+
+            var actual = await client.GetNumberOfMessagesOnQueue(queueName);
+
+            Assert.Equal(1, actual.ApproximateNumberOfMessages);
+
+            await client.DeleteQueueAsync(queueName);
+        }
+
         private SQSClient CreateSQSClient()
         {
             return new SQSClient("http://localhost:9324", null, "mock", "mock");

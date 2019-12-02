@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -604,6 +604,30 @@ namespace NetSQS
             };
 
             await _client.DeleteMessageAsync(request);
+        }
+
+        /// <summary>
+        /// Gets information regarding the number of messages on a queue.
+        /// </summary>
+        /// <param name="queueName">The name of the queue</param>
+        /// <returns></returns>
+        public async Task<NumberOfMessagesResponse> GetNumberOfMessagesOnQueue(string queueName)
+        {
+            var queueUrl = await GetQueueUrlAsync(queueName);
+            var response = await _client.GetQueueAttributesAsync(new GetQueueAttributesRequest(queueUrl, new List<string>
+            {
+                "ApproximateNumberOfMessages",
+                "ApproximateNumberOfMessagesNotVisible",
+                "ApproximateNumberOfMessagesDelayed"
+            }));
+
+            return new NumberOfMessagesResponse
+            {
+                QueueName = queueName,
+                ApproximateNumberOfMessages = response.ApproximateNumberOfMessages,
+                ApproximateNumberOfMessagesNotVisible = response.ApproximateNumberOfMessagesNotVisible,
+                ApproximateNumberOfMessagesDelayed = response.ApproximateNumberOfMessagesDelayed
+            };
         }
 
         /// <summary>

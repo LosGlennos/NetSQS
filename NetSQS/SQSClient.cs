@@ -31,6 +31,8 @@ namespace NetSQS
     {
         private readonly AmazonSQSClient _client;
 
+        private Dictionary<string, string> _queueCache;
+
         /// <summary>
         /// Creates a new SQS Client. If both endpoint and region are specified, the region endpoint will override the ServiceURL endpoint.
         /// </summary>
@@ -146,8 +148,7 @@ namespace NetSQS
                 {
                     MessageAttributes = v.MessageAttributes.ToDictionary(attribute => attribute.Key, attribute => new MessageAttributeValue {StringValue = attribute.Value, DataType = "String"}),
                     MessageGroupId = queueName.EndsWith(".fifo") ? queueUrl : null
-                }
-                ).ToList<SendMessageBatchRequestEntry>(),
+                }).ToList(),
                 QueueUrl = queueUrl
             };
 
@@ -180,20 +181,18 @@ namespace NetSQS
         /// Creates a Standard queue with default values
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <returns></returns>
-        public async Task<string> CreateStandardQueueAsync(string queueName)
+        public async Task CreateStandardQueueAsync(string queueName)
         {
-            return await CreateQueueAsync(queueName, false, true);
+            await CreateQueueAsync(queueName, false, true);
         }
 
         /// <summary>
         /// Creates a FIFO queue with default values. Queue name must end with .fifo
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
-        /// <returns></returns>
-        public async Task<string> CreateStandardFifoQueueAsync(string queueName)
+        public async Task CreateStandardFifoQueueAsync(string queueName)
         {
-            return await CreateQueueAsync(queueName, true, true);
+            await CreateQueueAsync(queueName, true, true);
         }
 
         /// <summary>
@@ -204,8 +203,7 @@ namespace NetSQS
         /// <param name="visibilityTimeout">The time period in seconds for which a message should not be picked by another processor. Valid values: 0 to 43,200. Default: 30</param>
         /// <param name="isFifo">Defines if the queue created is a FIFO queue.</param>
         /// <param name="isEncrypted">Used if server side encryption is active.</param>
-        /// <returns></returns>
-        public async Task<string> CreateQueueAsync(string queueName, bool isFifo, bool isEncrypted, int retentionPeriod = 345600, int visibilityTimeout = 30)
+        public async Task CreateQueueAsync(string queueName, bool isFifo, bool isEncrypted, int retentionPeriod = 345600, int visibilityTimeout = 30)
         {
             var attributes = new Dictionary<string, string>
             {
@@ -240,8 +238,7 @@ namespace NetSQS
                 Attributes = attributes
             };
 
-            var queue = await _client.CreateQueueAsync(request);
-            return queue.QueueUrl;
+            await _client.CreateQueueAsync(request);
         }
 
         /// <summary>
@@ -301,40 +298,6 @@ namespace NetSQS
 
             return StartMessageReceiverInternal(queueName, pollWaitTimeSeconds, maxNumberOfMessagesPerPoll,
                 async (arg) => messageProcessor(arg), cancellationToken);
-        }
-
-        /// <summary>
-        /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
-        /// </summary>
-        /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
-        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
-        /// <param name="asyncMessageProcessor">The message processor that handles the message received from the queue.</param>
-        /// <returns></returns>
-        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll, Func<string, Task<bool>> asyncMessageProcessor)
-        {
-            var cancellationTokenSource = new CancellationTokenSource();
-            StartMessageReceiverInternal(queueName, pollWaitTimeSeconds, maxNumberOfMessagesPerPoll,
-                asyncMessageProcessor, cancellationTokenSource.Token);
-            return cancellationTokenSource;
-        }
-
-        /// <summary>
-        /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
-        /// </summary>
-        /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTimeSeconds">The waiting time for each poll of the queue</param>
-        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages to get with each poll. Valid values: 1 to 10</param>
-        /// <param name="messageProcessor">The message processor that handles the message received from the queue.</param>
-        /// <returns></returns>
-        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll, Func<string, bool> messageProcessor)
-        {
-            var cancellationTokenSource = new CancellationTokenSource();
-            StartMessageReceiverInternal(queueName, pollWaitTimeSeconds, maxNumberOfMessagesPerPoll,
-                async (arg) => messageProcessor(arg), cancellationTokenSource.Token);
-            return cancellationTokenSource;
         }
 
         /// <summary>
@@ -477,41 +440,6 @@ namespace NetSQS
         /// <summary>
         /// Waits for the queue to be available by checking its availability for a given number of retries, then continuously checks the queue for new messages.
         /// Handles the messages on the queue in the processor specified.
-        /// Will run a polling task by starting a Task in a parallel thread that is not awaited.
-        /// </summary>
-        /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
-        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
-        /// <param name="numRetries">Number of connection retries to the queue.</param>
-        /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
-        /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
-        /// <param name="asyncMessageProcessor">The message processor which will handle the message picked from the queue</param>
-        /// <returns></returns>
-        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
-            int numRetries, int minBackOff, int maxBackOff, Func<string, Task<bool>> asyncMessageProcessor)
-        {
-            var task = Task.Run(async () => await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff));
-            try
-            {
-                task.Wait();
-            }
-            catch (AggregateException e)
-            {
-                if (e.InnerException is QueueDoesNotExistException)
-                {
-                    throw new QueueDoesNotExistException(e.InnerException.Message);
-                }
-            }
-
-            var cancellationTokenSource = new CancellationTokenSource();
-            StartMessageReceiverInternal(queueName, pollWaitTimeSeconds, maxNumberOfMessagesPerPoll, asyncMessageProcessor, cancellationTokenSource.Token);
-            return cancellationTokenSource;
-        }
-
-        /// <summary>
-        /// Waits for the queue to be available by checking its availability for a given number of retries, then continuously checks the queue for new messages.
-        /// Handles the messages on the queue in the processor specified.
         /// Will start a long running task in a parallel thread that is not awaited.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
@@ -544,48 +472,23 @@ namespace NetSQS
         }
 
         /// <summary>
-        /// Waits for the queue to be available by checking its availability for a given number of retries, then continuously checks the queue for new messages.
-        /// Handles the messages on the queue in the processor specified.
-        /// Will run a polling task by starting a Task in a parallel thread that is not awaited.
-        /// </summary>
-        /// <param name="queueName">The name of the queue</param>
-        /// <param name="pollWaitTimeSeconds">The amount of time the client will look for messages on the queue</param>
-        /// <param name="maxNumberOfMessagesPerPoll">The maximum number of messages that will be picked from the queue.</param>
-        /// <param name="numRetries">Number of connection retries to the queue.</param>
-        /// <param name="minBackOff">The minimum back off time for which to look for new messages</param>
-        /// <param name="maxBackOff">The maximum back off time for which to look for new messages</param>
-        /// <param name="messageProcessor">The message processor which will handle the message picked from the queue</param>
-        /// <returns></returns>
-        [Obsolete("Use StartMessageReceiver-method that takes cancellation token as a parameter. This method will be removed in future releases", true)]
-        public CancellationTokenSource StartMessageReceiver(string queueName, int pollWaitTimeSeconds, int maxNumberOfMessagesPerPoll,
-            int numRetries, int minBackOff, int maxBackOff, Func<string, bool> messageProcessor)
-        {
-            var task = Task.Run(async () => await WaitForQueueAsync(queueName, numRetries, minBackOff, maxBackOff));
-            try
-            {
-                task.Wait();
-            }
-            catch (AggregateException e)
-            {
-                if (e.InnerException is QueueDoesNotExistException)
-                {
-                    throw new QueueDoesNotExistException(e.InnerException.Message);
-                }
-            }
-
-            return StartMessageReceiver(queueName, pollWaitTimeSeconds, maxNumberOfMessagesPerPoll, messageProcessor);
-        }
-
-        /// <summary>
         /// Gets the URL for the queue from its name.
         /// </summary>
         /// <param name="queueName">The name of the queue</param>
         /// <returns></returns>
         private async Task<string> GetQueueUrlAsync(string queueName)
         {
-            var request = new GetQueueUrlRequest(queueName);
-            var response = await _client.GetQueueUrlAsync(request);
-            return response.QueueUrl;
+            if (_queueCache == null || !_queueCache.ContainsKey(queueName))
+            {
+                var request = new GetQueueUrlRequest(queueName);
+                var response = await _client.GetQueueUrlAsync(request);
+
+                _queueCache ??= new Dictionary<string, string>();
+                _queueCache.Add(queueName, response.QueueUrl);
+            }
+         
+            _queueCache.TryGetValue(queueName, out var queueUrl);
+            return queueUrl;
         }
 
         /// <summary>

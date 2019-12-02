@@ -23,8 +23,7 @@ namespace NetSQS.Tests
         {
             var client = CreateSQSClient();
             var queueName = Guid.NewGuid().ToString();
-            var queueUrl = await client.CreateStandardQueueAsync(queueName);
-            Assert.NotEmpty(queueUrl);
+            await client.CreateStandardQueueAsync(queueName);
 
             await client.DeleteQueueAsync(queueName);
         }
@@ -34,8 +33,7 @@ namespace NetSQS.Tests
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}.fifo";
-            var queueUrl = await client.CreateStandardFifoQueueAsync(queueName);
-            Assert.NotEmpty(queueUrl);
+            await client.CreateStandardFifoQueueAsync(queueName);
 
             await client.DeleteQueueAsync(queueName);
         }
@@ -53,8 +51,7 @@ namespace NetSQS.Tests
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}.fifo";
-            var queueUrl = await client.CreateQueueAsync(queueName, true, true);
-            Assert.NotEmpty(queueUrl);
+            await client.CreateQueueAsync(queueName, true, true);
 
             await client.DeleteQueueAsync(queueName);
         }

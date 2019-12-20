@@ -23,8 +23,7 @@ namespace NetSQS.Tests
         {
             var client = CreateSQSClient();
             var queueName = Guid.NewGuid().ToString();
-            var queueUrl = await client.CreateStandardQueueAsync(queueName);
-            Assert.NotEmpty(queueUrl);
+            await client.CreateStandardQueueAsync(queueName);
 
             await client.DeleteQueueAsync(queueName);
         }
@@ -34,8 +33,7 @@ namespace NetSQS.Tests
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}.fifo";
-            var queueUrl = await client.CreateStandardFifoQueueAsync(queueName);
-            Assert.NotEmpty(queueUrl);
+            await client.CreateStandardFifoQueueAsync(queueName);
 
             await client.DeleteQueueAsync(queueName);
         }
@@ -53,8 +51,7 @@ namespace NetSQS.Tests
         {
             var client = CreateSQSClient();
             var queueName = $"{Guid.NewGuid().ToString()}.fifo";
-            var queueUrl = await client.CreateQueueAsync(queueName, true, true);
-            Assert.NotEmpty(queueUrl);
+            await client.CreateQueueAsync(queueName, true, true);
 
             await client.DeleteQueueAsync(queueName);
         }
@@ -266,8 +263,8 @@ namespace NetSQS.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-           _ = client.StartMessageReceiver(queueName, 1, 1, (string receivedMessage) =>
-            {
+           _ = client.StartMessageReceiver(queueName, new MessageReceiverOptions(),
+               (string receivedMessage) => {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
                 return true;
@@ -297,7 +294,7 @@ namespace NetSQS.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            _ = client.StartMessageReceiver(queueName, 1, 1, async (string receivedMessage) =>
+            _ = client.StartMessageReceiver(queueName, new MessageReceiverOptions(), async (string receivedMessage) =>
             {
                 Assert.Equal("Hello World!", receivedMessage);
                 MessagePicked = true;
@@ -331,8 +328,8 @@ namespace NetSQS.Tests
             var cancellationToken = cancellationTokenSource.Token;
 
 
-            _ = client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
-            {
+            _ = client.StartMessageReceiver(queueName, new MessageReceiverOptions(),
+                async (ISQSMessage receivedMessage) => {
                 numberOfPickedMessages += 1;
                 if (numberOfPickedMessages == 1)
                 {
@@ -372,8 +369,8 @@ namespace NetSQS.Tests
             var cancellationToken = cancellationTokenSource.Token;
 
 
-            _ = client.StartMessageReceiver(queueName, 1, 1, async (ISQSMessage receivedMessage) =>
-            {
+            _ = client.StartMessageReceiver(queueName, new MessageReceiverOptions(),
+                async (ISQSMessage receivedMessage) => {
                 Assert.Equal("Foo", receivedMessage.Body);
 
                 var attributes = receivedMessage.MessageAttributes;
@@ -400,8 +397,8 @@ namespace NetSQS.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, async (string message) =>
-             {
+            Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, new MessageReceiverOptions(),
+                async (string message) => {
                  Assert.Equal("Hello World!", message);
                  return await Task.FromResult(true);
              }, cancellationToken));
@@ -416,8 +413,8 @@ namespace NetSQS.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, 1, 1, 2, 1, 10, (string message) =>
-            {
+            Assert.ThrowsAsync<QueueDoesNotExistException>(() => client.StartMessageReceiver(queueName, new MessageReceiverOptions(),
+                (string message) => {
                 Assert.Equal("Hello World!", message);
                 return true;
             }, cancellationToken));

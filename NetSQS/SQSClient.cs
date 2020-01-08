@@ -276,23 +276,6 @@ namespace NetSQS
         /// <returns></returns>
         public Task StartMessageReceiver(string queueName, MessageReceiverOptions options, Func<string, bool> messageProcessor, CancellationToken cancellationToken)
         {
-            if (options.WaitForQueue)
-            {
-                var task = Task.Run(async () => await WaitForQueueAsync(queueName, options.WaitForQueueTimeoutSeconds),
-                    cancellationToken);
-                try
-                {
-                    task.Wait(cancellationToken);
-                }
-                catch (AggregateException e)
-                {
-                    if (e.InnerException is QueueDoesNotExistException)
-                    {
-                        throw new QueueDoesNotExistException(e.InnerException.Message);
-                    }
-                }
-            }
-
             return StartMessageReceiverInternal(queueName, options, async (arg) => messageProcessor(arg), cancellationToken);
         }
 
@@ -309,26 +292,8 @@ namespace NetSQS
         public Task StartMessageReceiver(string queueName, MessageReceiverOptions options,
             Action<ISQSMessage> messageProcessor, CancellationToken cancellationToken)
         {
-            if (options.WaitForQueue)
-            {
-                var task = Task.Run(
-                    async () => await WaitForQueueAsync(queueName, options.WaitForQueueTimeoutSeconds), cancellationToken);
-                try
-                {
-                    task.Wait(cancellationToken);
-                }
-                catch (AggregateException e)
-                {
-                    if (e.InnerException is QueueDoesNotExistException)
-                    {
-                        throw new QueueDoesNotExistException(e.InnerException.Message);
-                    }
-                }
-            }
-
             return StartMessageReceiverInternal(queueName, options, async (arg) => messageProcessor(arg), cancellationToken);
         }
-
 
         /// <summary>
         /// Starts a long running process that checks the queue for any new messages, and handles the messages on the queue in the processor specified.
@@ -342,23 +307,6 @@ namespace NetSQS
         /// <returns></returns>
         public Task StartMessageReceiver(string queueName, MessageReceiverOptions options, Func<ISQSMessage, Task> asyncMessageProcessor, CancellationToken cancellationToken)
         {
-            if (options.WaitForQueue)
-            {
-                var task = Task.Run(async () => await WaitForQueueAsync(queueName, options.WaitForQueueTimeoutSeconds),
-                    cancellationToken);
-                try
-                {
-                    task.Wait(cancellationToken);
-                }
-                catch (AggregateException e)
-                {
-                    if (e.InnerException is QueueDoesNotExistException)
-                    {
-                        throw new QueueDoesNotExistException(e.InnerException.Message);
-                    }
-                }
-            }
-
             return StartMessageReceiverInternal(queueName, options, asyncMessageProcessor, cancellationToken);
         }
 
@@ -372,23 +320,6 @@ namespace NetSQS
         /// <returns></returns>
         public Task StartMessageReceiver(string queueName, MessageReceiverOptions options, Func<string, Task<bool>> asyncMessageProcessor, CancellationToken cancellationToken)
         {
-            if (options.WaitForQueue)
-            {
-                var task = Task.Run(async () => await WaitForQueueAsync(queueName, options.WaitForQueueTimeoutSeconds),
-                    cancellationToken);
-                try
-                {
-                    task.Wait(cancellationToken);
-                }
-                catch (AggregateException e)
-                {
-                    if (e.InnerException is QueueDoesNotExistException)
-                    {
-                        throw new QueueDoesNotExistException(e.InnerException.Message);
-                    }
-                }
-            }
-
             return StartMessageReceiverInternal(queueName, options, asyncMessageProcessor, cancellationToken);
         }
 
@@ -455,30 +386,24 @@ namespace NetSQS
         }
 
         /// <summary>
-        /// Waits for a queue to be available.
+        /// Synchronously waits for a queue to be available.
         /// </summary>
-        /// <param name="queueName">The name of the queue</param>
-        /// <param name="timeoutInSeconds">The maximum number of seconds to wait for the queue to be available</param>
-        /// <returns></returns>
-        private async Task WaitForQueueAsync(string queueName, int timeoutInSeconds)
+        private void WaitForQueue(string queueName, MessageReceiverOptions options, CancellationToken cancellationToken)
         {
-            for (var i = 0; i < timeoutInSeconds; i++)
+            for (var i = 0; i < options.WaitForQueueTimeoutSeconds; i++)
             {
                 try
                 {
-                    await GetQueueUrlAsync(queueName);
+                    GetQueueUrlAsync(queueName).GetAwaiter().GetResult();
                     return;
                 }
-                catch (AmazonSQSException)
+                catch (QueueDoesNotExistException)
                 {
-                    Task.Delay(1000).Wait();
-
-                    if (i == timeoutInSeconds - 1)
-                    {
-                        throw;
-                    }
+                    Task.Delay(1000, cancellationToken).Wait(cancellationToken);
                 }
             }
+
+            throw new QueueDoesNotExistException($"Queue {queueName} does still not exist after waiting for {options.WaitForQueueTimeoutSeconds} seconds.");
         }
 
         /// <summary>
@@ -559,6 +484,8 @@ namespace NetSQS
             if (options.VisibilityTimeoutSeconds.HasValue && options.VisibilityTimeoutSeconds.Value < 0)
                 throw new ArgumentException($"{nameof(options.VisibilityTimeoutSeconds)} must be 0 or greater, or null.",
                     nameof(options.MessagePollWaitTimeSeconds));
+
+            if (options.WaitForQueue) WaitForQueue(queueName, options, cancellationToken);
 
             return Task.Run(async () =>
             {

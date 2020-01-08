@@ -389,7 +389,7 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public void StartMessageReceiver_ShouldThrowErrorWithAsyncMethod_IfQueueDoesNotExist()
+        public void StartMessageReceiver_ShouldThrowQueueDoesNotExistExceptionWithAsyncMethod_IfQueueDoesNotExistAndShouldNotWaitForQueue()
         {
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
@@ -405,7 +405,32 @@ namespace NetSQS.Tests
         }
 
         [Fact]
-        public void StartMessageReceiver_ShouldThrowError_IfQueueDoesNotExist()
+        public void StartMessageReceiver_ShouldThrowQueueDoesNotExistExceptionWithAsyncMethod_IfQueueDoesNotExistAndShouldWaitForQueue()
+        {
+            var queueName = $"{Guid.NewGuid().ToString()}";
+            var client = CreateSQSClient();
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+            Assert.ThrowsAsync<QueueDoesNotExistException>(() =>
+            {
+                var messageReceiverOptions = new MessageReceiverOptions
+                {
+                    WaitForQueue = true,
+                    WaitForQueueTimeoutSeconds = 1
+                };
+                return client.StartMessageReceiver(queueName, messageReceiverOptions,
+                    async (string message) =>
+                    {
+                        Assert.Equal("Hello World!", message);
+                        return await Task.FromResult(true);
+                    }, cancellationToken);
+            });
+        }
+
+        [Fact]
+        public void StartMessageReceiver_ShouldThrowQueueDoesNotExistExceptionWithSyncMethod_IfQueueDoesNotExistAndShouldNotWaitForQueue()
         {
             var queueName = $"{Guid.NewGuid().ToString()}";
             var client = CreateSQSClient();
@@ -418,6 +443,31 @@ namespace NetSQS.Tests
                 Assert.Equal("Hello World!", message);
                 return true;
             }, cancellationToken));
+        }
+
+        [Fact]
+        public void StartMessageReceiver_ShouldThrowQueueDoesNotExistExceptionWithSyncMethod_IfQueueDoesNotExistAndShouldWaitForQueue()
+        {
+            var queueName = $"{Guid.NewGuid().ToString()}";
+            var client = CreateSQSClient();
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+            Assert.ThrowsAsync<QueueDoesNotExistException>(() =>
+            {
+                var messageReceiverOptions = new MessageReceiverOptions
+                {
+                    WaitForQueue = true,
+                    WaitForQueueTimeoutSeconds = 1
+                };
+                return client.StartMessageReceiver(queueName, messageReceiverOptions,
+                    (string message) =>
+                    {
+                        Assert.Equal("Hello World!", message);
+                        return true;
+                    }, cancellationToken);
+            });
         }
 
         [Fact]

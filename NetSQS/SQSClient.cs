@@ -336,7 +336,7 @@ namespace NetSQS
                 var response = await _client.GetQueueUrlAsync(request);
 
                 _queueCache ??= new Dictionary<string, string>();
-                _queueCache.Add(queueName, response.QueueUrl);
+                _queueCache[queueName] = response.QueueUrl;
             }
 
             _queueCache.TryGetValue(queueName, out var queueUrl);
